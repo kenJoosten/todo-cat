@@ -1,0 +1,59 @@
+# Authentication
+
+Better Auth with email and password only, on the Drizzle database from `lib/db.ts`; `better-auth`, `@better-auth/drizzle-adapter` and the `auth` CLI are pinned to the same exact version.
+
+## Files
+
+- `lib/auth-options.ts`: the options every instance shares; anything that shapes the database schema (methods, plugins) goes here.
+- `lib/auth.ts`: the app's instance (shared options plus the Drizzle adapter and `nextCookies()`) and `getUserId`.
+- `lib/auth-schema.ts`: Better Auth's Drizzle tables, generated; never edit it by hand.
+- `scripts/auth-cli-config.mts`: the config the Better Auth CLI loads.
+- `app/api/auth/[...all]/route.ts`: Better Auth's HTTP endpoints under `/api/auth/*`.
+- `app/auth-actions.ts`: the sign-up, sign-in and sign-out Server Actions behind the forms.
+
+## Principles
+
+- `getUserId(headers)` is the only code that reads sessions: pages, Server Actions and every later adapter (REST, agent tools, MCP) call it; nothing else calls `auth.api.getSession`.
+- It accepts the session cookie and `Authorization: Bearer <token>` alike, so callers never care which kind of client they serve.
+- Every page and action checks the session itself, server-side; there is no proxy (middleware) check, as both Next and Better Auth advise.
+- `/` redirects signed-out visitors to `/login`; the `(auth)` layout sends signed-in users from `/login` and `/signup` back to `/`.
+- The forms post to Server Actions that call `auth.api`, so they work before hydration and no auth client ships to the browser.
+- `nextCookies()` sets the session cookie from inside Server Actions, and it must stay the last plugin.
+- Failed sign-ups and sign-ins return a message per Better Auth error code (see `app/auth-actions.ts`); unknown errors are rethrown, not shown.
+
+## Changing the schema
+
+1. Change `lib/auth-options.ts`, for example by adding a plugin.
+2. `npm run auth:generate` rewrites `lib/auth-schema.ts` from the options.
+3. `npm run db:generate` and `npm run db:migrate`, as for any schema change ([database.md](database.md)); never `auth migrate`, which only works with Better Auth's built-in Kysely adapter.
+
+`npx auth check --config scripts/auth-cli-config.mts` reports whether the generated schema still matches the options.
+
+## Why these choices
+
+- The adapter comes from `@better-auth/drizzle-adapter/relations-v2`, because Drizzle v1 uses Relations v2; the package's default entry generates v1 relations.
+- The CLI gets its own config because it cannot load `lib/auth.ts`: `lib/db.ts` imports `server-only`, which throws outside React Server Components.
+- That config hands the adapter an empty object instead of `db`, because generating and checking the schema never query the database.
+- `betterAuth` comes from `better-auth/minimal`, which leaves out the Kysely adapter we do not use.
+- Server Actions instead of Better Auth's React client keep every session read server-side, behind `getUserId`.
+
+## Plugins enabled ahead of their clients
+
+- Bearer: sign-in and sign-up responses carry the token in a `set-auth-token` header, and clients send it back as `Authorization: Bearer <token>`.
+- Bearer's `requireSignature` stays off, because the device flow hands out raw session tokens, which the plugin signs itself.
+- Device authorization uses the first-party flow: the CLI requests a code at `/api/auth/device/code`, the user approves it at `/device`, and the CLI polls `/api/auth/device/token` for a session token it then sends as a bearer token.
+- Only the client id `cliClientId` (`todo-cat-cli`) may start a device login; `validateClient` rejects any other.
+- The `/device` approval page does not exist yet; build it per the security requirements in Better Auth's device authorization docs.
+
+## Tests
+
+- `lib/auth.test.ts` runs the real `auth` and `getUserId` against a temp database, with `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` stubbed before the first import.
+- It builds a test-only instance from `auth.options` plus `testUtils()`, whose helpers create users and sessions; the real instance accepts those sessions because both share the secret and the database.
+- `testUtils()` must never enter `lib/auth-options.ts` or `lib/auth.ts`: its helpers can create sessions for any user.
+- `e2e/auth.spec.ts` walks through the real sign-up, sign-out and sign-in flow in the browser.
+
+## Gotchas
+
+- Better Auth reads `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` from the environment; the e2e server overrides `BETTER_AUTH_URL` with its own port.
+- `auth generate` writes imports in an order Biome rejects, so `npm run auth:generate` runs `biome check --write` on the file afterwards.
+- Better Auth's installation guide imports `better-auth/adapters/drizzle`, which re-exports the Relations v1 adapter; always import `@better-auth/drizzle-adapter/relations-v2`.

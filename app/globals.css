@@ -1,26 +1,23 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Lissie's palette: periwinkle ground, indigo ink, cat-eye amber for the one main action. */
+@theme {
+  --color-ground: #eef0f7;
+  --color-ink: #1e1b3a;
+  --color-muted: #5b5875;
+  --color-line: #c9cbe0;
+  --color-amber: #f2b705;
+  --color-amber-deep: #d9a204;
+  --color-danger: #b4232c;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-bricolage);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ground);
+  color: var(--color-ink);
 }

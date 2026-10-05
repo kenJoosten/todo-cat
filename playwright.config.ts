@@ -41,6 +41,8 @@ export default defineConfig({
     env: {
       TODO_CAT_DIST_DIR: distDir,
       DATABASE_URL: process.env.E2E_DATABASE_URL,
+      // Better Auth's base URL must be this server, not the dev server's URL from .env.
+      BETTER_AUTH_URL: baseURL,
     },
     reuseExistingServer: false,
     timeout: 120_000,

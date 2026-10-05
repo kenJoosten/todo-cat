@@ -20,6 +20,8 @@ Lissie will be an AI agent, which is not in the code yet.
 - Biome for linting and formatting, configured in `biome.json`.
 - Drizzle ORM (v1 RC) on SQLite via `@libsql/client`; `lib/db.ts` is the only module that opens the database; see [tech-docs/database.md](tech-docs/database.md).
 - Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
+- Better Auth (email and password, bearer, device authorization); `getUserId` in `lib/auth.ts` is the only code that reads sessions; see [tech-docs/auth.md](tech-docs/auth.md).
+- Tailwind v4; shared UI styling lives in `components/ui/`, so pages compose those components instead of repeating class strings.
 
 ## Commands
 
@@ -31,6 +33,7 @@ Lissie will be an AI agent, which is not in the code yet.
 - `npm run db:generate`: generate a migration from `lib/schema.ts` into `drizzle/`.
 - `npm run db:migrate`: apply pending migrations to the database in `DATABASE_URL`.
 - `npm run db:reset`: delete the local database file and migrate a fresh one.
+- `npm run auth:generate`: regenerate `lib/auth-schema.ts` from `lib/auth-options.ts` with the Better Auth CLI.
 - `npm test`: run the Vitest tests once.
 - `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
 - `npm run qa`: run all of the above checks; CI runs the same script.
@@ -68,6 +71,7 @@ Index:
 - [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
 - [database.md](tech-docs/database.md): Drizzle on SQLite, migrations, and how tests get their own databases.
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
+- [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
 
 ## Maintenance
 

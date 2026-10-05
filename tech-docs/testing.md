@@ -51,5 +51,6 @@ The e2e server must never collide with `npm run dev` or with another checkout ru
 - That throwaway tsconfig sits next to the dist dir, not inside it, because Turbopack cannot read files inside its own dist dir.
 - Playwright workers re-read `playwright.config.ts`, so every generated value is stored in `process.env` once and inherited by the workers.
 - Vitest aliases `server-only` to its empty module, because outside React Server Components the real one throws on import.
+- Next renders its own `role="alert"` route announcer on every page, so locate an alert by its text (`getByRole("alert").filter({ hasText })`).
 - Vitest test globals are off, so Testing Library cannot clean up between tests on its own; `vitest.setup.ts` does it for the jsdom project.
 - Vite resolves the `@/*` path alias from `tsconfig.json` natively (`resolve.tsconfigPaths`), so the `vite-tsconfig-paths` plugin from the Next guide is not needed.

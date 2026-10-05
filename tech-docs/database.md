@@ -7,7 +7,7 @@ SQLite through Drizzle ORM and the `@libsql/client` driver; the file lives at `D
 - `lib/db.ts` is the only module that opens the database; import `db` from it, never create another client.
 - It imports `server-only`, so a Client Component that reaches it fails the build instead of shipping database code to the browser.
 - Tables live in `lib/schema.ts`; drizzle-kit diffs that file against the latest migration snapshot to generate SQL.
-- There are no tables yet: todos arrive with the architecture, auth tables with authentication.
+- `lib/schema.ts` re-exports Better Auth's generated tables from `lib/auth-schema.ts` (see [auth.md](auth.md)); todos arrive with the architecture.
 - Schema changes always go through `npm run db:generate` and a committed migration, never `drizzle-kit push`, so every database (local, tests, e2e, production) reaches the same schema the same way.
 
 ## Why these choices
@@ -19,9 +19,6 @@ SQLite through Drizzle ORM and the `@libsql/client` driver; the file lives at `D
 ## Migrations
 
 - `drizzle/` holds one folder per migration (`<timestamp>_<name>/migration.sql` plus `snapshot.json`); v1 has no journal file.
-- `npm run db:generate` prints "No schema changes" and writes nothing while the schema is empty; `drizzle/` appears with the first table.
-- With no migrations, migrating only creates the `__drizzle_migrations` log table.
-- `drizzle/.gitkeep` keeps the folder in git while it is empty: Drizzle's runtime `migrate()` throws on a missing folder, which only shows on a fresh checkout because drizzle-kit creates the folder locally.
 - `db:reset` refuses any `DATABASE_URL` that is not a `file:` URL, so it can never wipe a remote database.
 
 ## Tests
