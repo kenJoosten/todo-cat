@@ -19,9 +19,9 @@ Lissie will be an AI agent, which is not in the code yet.
 - One todo service, `lib/todo-service.ts`, with thin adapters around it; see [tech-docs/architecture.md](tech-docs/architecture.md).
 - npm workspaces: `contract/` (shared zod schemas) and `cli/` (the `todo-cat` CLI, a REST client); see [tech-docs/workspaces.md](tech-docs/workspaces.md) and [tech-docs/cli.md](tech-docs/cli.md).
 - Drizzle ORM (v1 RC) on SQLite via `@libsql/client`; `lib/db.ts` is the only module that opens the database; see [tech-docs/database.md](tech-docs/database.md).
-- Better Auth (email and password, bearer, device authorization); `getUserId` in `lib/auth.ts` is the only code that reads sessions; see [tech-docs/auth.md](tech-docs/auth.md).
 - Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
-- Biome for linting and formatting; Tailwind v4, with shared UI styling in `components/ui/`, so pages compose those components instead of repeating class strings.
+- Better Auth (email and password, bearer, device authorization); `getUserId` in `lib/auth.ts` is the only code that reads sessions; see [tech-docs/auth.md](tech-docs/auth.md).
+- Tailwind v4; shared UI styling lives in `components/ui/`, so pages compose those components instead of repeating class strings.
 
 ## Commands
 
