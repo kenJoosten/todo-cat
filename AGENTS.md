@@ -24,10 +24,17 @@ Lissie will be an AI agent, which is not in the code yet.
 
 - `npm run dev`: start the dev server.
 - `npm run build`: production build.
-- `npm run lint`: Biome check (lint, format, import order); must pass before committing.
+- `npm run lint`: Biome check (lint, format, import order); warnings fail it too.
+- `npm run typecheck`: TypeScript check of the root and every workspace.
 - `npm run format`: apply Biome formatting.
 - `npm test`: run the Vitest tests once.
 - `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
+- `npm run qa`: run all of the above checks; CI runs the same script.
+
+## Definition of done
+
+- Run `npm run qa` before you call a task done, and only call it done when it passes.
+- Fix the code instead of suppressing findings: no `biome-ignore`, `@ts-expect-error`, `@ts-ignore`, skipped tests, or loosened config to get green.
 
 ## Verify, don't remember
 
@@ -46,7 +53,7 @@ Lissie will be an AI agent, which is not in the code yet.
 Index:
 
 - [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
-- [testing.md](tech-docs/testing.md): test strategy, commands, and gotchas for Vitest and Playwright.
+- [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 
 ## Maintenance
 

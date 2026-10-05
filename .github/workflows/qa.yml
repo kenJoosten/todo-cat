@@ -1,0 +1,71 @@
+name: QA
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Chromium system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # Copies .env.example; every secret-named key gets a random dummy, never a real secret.
+      - name: Write .env with dummy secrets
+        run: |
+          while IFS= read -r line; do
+            case "$line" in '' | '#'*) continue ;; esac
+            key=${line%%=*}
+            value=${line#*=}
+            case "$key" in
+              *_KEY | *_SECRET | *_TOKEN | *_PASSWORD) value="ci-dummy-$(openssl rand -hex 32)" ;;
+            esac
+            echo "$key=$value"
+          done < .env.example > .env
+          echo "Keys in .env: $(cut -d= -f1 .env | tr '\n' ' ')"
+
+      - run: npm run qa
+
+      - name: Upload QA log and Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qa-results
+          path: |
+            .qa/
+            test-results/
+          if-no-files-found: ignore

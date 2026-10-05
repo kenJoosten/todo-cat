@@ -45,8 +45,11 @@ next-env.d.ts
 .claude/skills/impeccable/scripts/bin/
 
 # e2e dev server build and Playwright output
-/.next-e2e/
+/.next-e2e*
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# QA script log
+/.qa/
