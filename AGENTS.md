@@ -38,7 +38,7 @@ Lissie will be an AI agent, which is not in the code yet.
 - `npm run auth:generate`: regenerate `lib/auth-schema.ts` from `lib/auth-options.ts` with the Better Auth CLI.
 - `npm test`: run the Vitest tests once.
 - `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
-- `npx todo-cat --help`: the CLI, built by `npm install` or `npm run build -w cli`.
+- `npx todo-cat --help`: the CLI, built by `npm install` or `npm run build -w cli`; the `todo-cat-cli` skill teaches agents to manage someone's todos with it.
 - `npm run qa`: run all of the above checks; CI runs the same script.
 
 ## Definition of done

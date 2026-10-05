@@ -20,6 +20,11 @@
 - Every command's `--help` ends with examples.
 - Commander's own usage errors go through `exitOverride()` and come out in the same format, with exit code 2.
 
+## The agent skill
+
+- `.claude/skills/todo-cat-cli/SKILL.md` teaches agents the workflows and pitfalls of managing someone's todos with the CLI; it is not a copy of `--help`, which wins when the two disagree.
+- Update the skill when a change breaks one of its workflows, such as a renamed option, a new exit code, or a change in what `list` returns by default.
+
 ## Contract use
 
 - Inputs are parsed with the contract schemas before they are sent, so invalid input fails locally with `validation-failed`, the code the server would return.
