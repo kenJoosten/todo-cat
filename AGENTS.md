@@ -18,6 +18,7 @@ Lissie will be an AI agent, which is not in the code yet.
 - Next.js 16 App Router at the repo root (`app/`).
 - npm workspaces: `contract/` (shared zod schemas) and `cli/` (the todo-cat CLI), both still empty; see [tech-docs/workspaces.md](tech-docs/workspaces.md).
 - Biome for linting and formatting, configured in `biome.json`.
+- Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
 
 ## Commands
 
@@ -25,6 +26,8 @@ Lissie will be an AI agent, which is not in the code yet.
 - `npm run build`: production build.
 - `npm run lint`: Biome check (lint, format, import order); must pass before committing.
 - `npm run format`: apply Biome formatting.
+- `npm test`: run the Vitest tests once.
+- `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
 
 ## Verify, don't remember
 
@@ -43,6 +46,7 @@ Lissie will be an AI agent, which is not in the code yet.
 Index:
 
 - [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
+- [testing.md](tech-docs/testing.md): test strategy, commands, and gotchas for Vitest and Playwright.
 
 ## Maintenance
 
