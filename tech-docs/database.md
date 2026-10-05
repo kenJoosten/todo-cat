@@ -6,38 +6,35 @@ SQLite through Drizzle ORM and the `@libsql/client` driver; the file lives at `D
 
 - `lib/db.ts` is the only module that opens the database; import `db` from it, never create another client.
 - It imports `server-only`, so a Client Component that reaches it fails the build instead of shipping database code to the browser.
-- Tables live in `lib/schema.ts`; drizzle-kit diffs that file against the latest migration snapshot to generate SQL.
-- `lib/schema.ts` defines `todos` and re-exports Better Auth's generated tables from `lib/auth-schema.ts` (see [auth.md](auth.md)); only `lib/todo-service.ts` touches `todos` (see [architecture.md](architecture.md)).
-- Schema changes always go through `npm run db:generate` and a committed migration, never `drizzle-kit push`, so every database (local, tests, e2e, production) reaches the same schema the same way.
+- Tables live in `lib/schema.ts`, which also re-exports Better Auth's generated tables (see [auth.md](auth.md)); only `lib/todo-service.ts` touches `todos` (see [architecture.md](architecture.md)).
+- Schema changes always go through `npm run db:generate` and a committed migration, applied with `npm run db:migrate`, never `drizzle-kit push`, so every database (local, tests, e2e, production) reaches the same schema the same way.
 
 ## Why these choices
 
 - Drizzle v1 RC (pinned exactly) instead of the 0.x `latest`: the docs already target v1, and v1 changes the migration folder format, so starting there avoids migrating the format later.
 - `@libsql/client` over `better-sqlite3`: no native build step at install time, and the same driver can later talk to a remote libSQL/Turso database.
-- `drizzle.config.ts` and `scripts/db-reset.mts` load `.env` through `@next/env`, so drizzle-kit sees the same variables, with the same precedence, as Next.
 
 ## Migrations
 
 - `drizzle/` holds one folder per migration (`<timestamp>_<name>/migration.sql` plus `snapshot.json`); v1 has no journal file.
-- `db:reset` refuses any `DATABASE_URL` that is not a `file:` URL, so it can never wipe a remote database.
+- `db:reset` and `db:seed` refuse any `DATABASE_URL` that is not a `file:` URL, so they can never wipe a remote database or put the public demo password on it.
 
 ## Dev seed
 
 - `npm run db:seed` migrates, then creates `demo@todo-cat.dev` (password `cat-person-2026`) and replaces that user's todos with the demo set from `scripts/demo-seed.ts`.
 - Running it again on the same day gives the same state, apart from new todo ids; timestamps are relative to the day it runs.
-- It refuses any `DATABASE_URL` that is not a `file:` URL, because the demo password is public.
-- It runs under tsx with `--conditions=react-server`, which resolves `server-only` to its empty module, so it can import `lib/` as is.
 
 ## Tests
 
-- `lib/todo-service.test.ts` and `scripts/demo-seed.test.ts` use the same pattern.
-- `lib/db.test.ts` points `DATABASE_URL` at a temp file before importing `lib/db.ts`, applies every migration with Drizzle's runtime `migrate()`, and checks that each one was recorded and that queries run.
+- `lib/db.ts` reads `DATABASE_URL` at import time and throws if it is missing, so tests that need a database point it at a temp file with `vi.stubEnv` and then import `lib/` dynamically (see `lib/db.test.ts`).
+- `lib/db.test.ts` applies every migration with Drizzle's runtime `migrate()` and checks that each one was recorded and that queries run.
 - The e2e server gets its own temp database, migrated before `next dev` starts; see [testing.md](testing.md).
 
 ## Gotchas
 
 - Drizzle's API changed a lot in v1 (`drizzle({ connection })` or `drizzle({ client })`, `migrate` from `drizzle-orm/libsql/migrator`, no `schema` option); check `node_modules/drizzle-orm` types before trusting examples.
+- Keep `dialect: "sqlite"` in `drizzle.config.ts`: drizzle-kit connects to it through `@libsql/client`, even though its bundled skill recommends `turso` for libSQL.
 - libsql enforces foreign keys, so deleting a user cascades to their todos without a `PRAGMA`.
-- `lib/db.ts` reads `DATABASE_URL` at import time and throws if it is missing; set the variable before the first import (tests use `vi.stubEnv` plus a dynamic import).
-- `@next/env` is CommonJS, so plain Node scripts must use its default export (`nextEnv.loadEnvConfig`); the named import fails at runtime even though it typechecks.
-- npm blocks the install scripts of esbuild and fsevents (drizzle-kit dependencies); neither is needed, so leave them unapproved.
+- Scripts that plain Node or a CLI loader runs are `.mts`, because the root `package.json` has no `"type": "module"`.
+- In such scripts, `@next/env` is CommonJS, so use its default export (`nextEnv.loadEnvConfig`); the named import fails at runtime even though it typechecks.
+- npm blocks the install scripts of esbuild and fsevents (dependencies of drizzle-kit, Vite, tsx and the CLI build); none of them needs its script, so leave them unapproved.

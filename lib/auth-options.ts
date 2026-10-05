@@ -3,7 +3,7 @@ import type { BetterAuthOptions } from "better-auth/minimal";
 import { bearer, deviceAuthorization } from "better-auth/plugins";
 
 // Shared by the app's instance (lib/auth.ts), the test instance, and the schema generator
-// (scripts/auth-cli-config.ts). Everything that shapes the database schema belongs here,
+// (scripts/auth-cli-config.mts). Everything that shapes the database schema belongs here,
 // so the generated schema always matches what the app runs.
 export const authOptions = {
   emailAndPassword: { enabled: true },

@@ -5,7 +5,7 @@ Better Auth with email and password only, on the Drizzle database from `lib/db.t
 ## Files
 
 - `lib/auth-options.ts`: the options every instance shares; anything that shapes the database schema (methods, plugins) goes here.
-- `lib/auth.ts`: the app's instance (shared options plus the Drizzle adapter and `nextCookies()`) and `getUserId`.
+- `lib/auth.ts`: the app's instance and `getUserId`.
 - `lib/auth-schema.ts`: Better Auth's Drizzle tables, generated; never edit it by hand.
 - `scripts/auth-cli-config.mts`: the config the Better Auth CLI loads.
 - `app/api/auth/[...all]/route.ts`: Better Auth's HTTP endpoints under `/api/auth/*`.
@@ -14,13 +14,11 @@ Better Auth with email and password only, on the Drizzle database from `lib/db.t
 
 ## Principles
 
-- `getUserId(headers)` is the only code that reads sessions: pages, Server Actions and every later adapter (REST, agent tools, MCP) call it; nothing else calls `auth.api.getSession`.
-- It accepts the session cookie and `Authorization: Bearer <token>` alike, so callers never care which kind of client they serve.
+- `getUserId(headers)` is the only code that reads sessions, from a cookie or a bearer token alike: pages, Server Actions and every adapter call it; nothing else calls `auth.api.getSession`.
 - Every page and action checks the session itself, server-side; there is no proxy (middleware) check, as both Next and Better Auth advise.
 - `/` redirects signed-out visitors to `/login`; the `(auth)` layout sends signed-in users from `/login` and `/signup` back to `/`.
 - `/login` and `/signup` take a `next` path to return to after signing in; `app/return-path.ts` drops anything that is not a path on this site.
-- The forms post to Server Actions that call `auth.api`, so they work before hydration and no auth client ships to the browser.
-- `nextCookies()` sets the session cookie from inside Server Actions, and it must stay the last plugin.
+- The forms post to Server Actions that call `auth.api`, so they work before hydration, no auth client ships to the browser, and every session read stays behind `getUserId`.
 - Failed sign-ups and sign-ins return a message per Better Auth error code (see `app/auth-actions.ts`); unknown errors are rethrown, not shown.
 
 ## Changing the schema
@@ -30,14 +28,6 @@ Better Auth with email and password only, on the Drizzle database from `lib/db.t
 3. `npm run db:generate` and `npm run db:migrate`, as for any schema change ([database.md](database.md)); never `auth migrate`, which only works with Better Auth's built-in Kysely adapter.
 
 `npx auth check --config scripts/auth-cli-config.mts` reports whether the generated schema still matches the options.
-
-## Why these choices
-
-- The adapter comes from `@better-auth/drizzle-adapter/relations-v2`, because Drizzle v1 uses Relations v2; the package's default entry generates v1 relations.
-- The CLI gets its own config because it cannot load `lib/auth.ts`: `lib/db.ts` imports `server-only`, which throws outside React Server Components.
-- That config hands the adapter an empty object instead of `db`, because generating and checking the schema never query the database.
-- `betterAuth` comes from `better-auth/minimal`, which leaves out the Kysely adapter we do not use.
-- Server Actions instead of Better Auth's React client keep every session read server-side, behind `getUserId`.
 
 ## Plugins for API and CLI clients
 
@@ -56,6 +46,6 @@ Better Auth with email and password only, on the Drizzle database from `lib/db.t
 
 ## Gotchas
 
-- Better Auth reads `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` from the environment; the e2e server overrides `BETTER_AUTH_URL` with its own port.
+- Better Auth's installation guide imports `better-auth/adapters/drizzle`, which re-exports the Relations v1 adapter; Drizzle v1 needs `@better-auth/drizzle-adapter/relations-v2`.
+- `betterAuth` comes from `better-auth/minimal`, which leaves out the Kysely adapter we do not use.
 - `auth generate` writes imports in an order Biome rejects, so `npm run auth:generate` runs `biome check --write` on the file afterwards.
-- Better Auth's installation guide imports `better-auth/adapters/drizzle`, which re-exports the Relations v1 adapter; always import `@better-auth/drizzle-adapter/relations-v2`.

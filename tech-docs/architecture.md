@@ -4,12 +4,14 @@ todo-cat has one piece of business logic, the todo service, and several thin ada
 around it. Hexagonal (ports and adapters), without the ceremony.
 
 ```
- browser pages ─┐
+ browser pages ──┐
  REST /api/todos ┤                       ┌──────────────┐
- agent tools  ───┼── getUserId(headers) ─▶ todo service ├──▶ lib/db.ts ──▶ SQLite
- MCP over HTTP ──┘                       └──────┬───────┘
+ agent tools*  ──┼── getUserId(headers) ─▶ todo service ├──▶ lib/db.ts ──▶ SQLite
+ MCP over HTTP* ─┘                       └──────┬───────┘
                                                 │ types and schemas
- CLI and stdio MCP ──▶ REST /api/todos     contract/ (@todo-cat/contract, zod)
+ CLI, stdio MCP* ──▶ REST /api/todos       contract/ (@todo-cat/contract, zod)
+
+ * not built yet
 ```
 
 ## The todo service
@@ -24,32 +26,22 @@ around it. Hexagonal (ports and adapters), without the ceremony.
   an id exists.
 - The service returns contract types (plain objects, dates as ISO strings), never
   Drizzle rows.
-- Rule violations are a few typed errors with stable codes from the contract's
-  `errorCodeSchema`. Adapters map them; they don't invent their own.
-- The service throws `TodoNotFoundError` (`todo-not-found`); `validation-failed` is what
-  an adapter reports when a contract schema rejects the input.
+- Errors carry stable codes from the contract's `errorCodeSchema`, and adapters map
+  them instead of inventing their own: the service throws `TodoNotFoundError`
+  (`todo-not-found`), and adapters report `validation-failed` when a contract schema
+  rejects the input.
 - `replaceTodos` exists only for the dev seed, which needs past timestamps; no adapter
   exposes it.
 
 ## Data
 
-- `todos` in `lib/schema.ts`: id, owner (`user_id`, cascade delete with the user), title,
-  optional due date, done, created at, completed at.
 - A due date is a date without time and stays an ISO `yyyy-mm-dd` string everywhere.
   A JavaScript `Date` is midnight UTC and shows the previous day west of Greenwich.
-- `completed at` is set when a todo is marked done (kept when it's marked done again) and
-  cleared when it's reopened.
-- Lists sort open before done, then by due date (none last), then newest first.
-- The text filter uses `instr`, not `like`, so `%` and `_` in a search match literally.
 
 ## The contract
 
-- The `contract/` workspace (`@todo-cat/contract`, `contract/src/index.ts`) holds the
-  zod schemas for todos, inputs, list filters, and the error body
-  `{ error: { code, message } }`, plus the few values server and CLI share for the
-  device login (`cliClientId`, `formatUserCode`).
-- It exports its TypeScript source with no build step; Turbopack, Vitest, tsx and the
-  CLI's esbuild bundle compile it where it is imported.
+- The `contract/` workspace (`@todo-cat/contract`) holds what server and clients share:
+  the zod schemas, the error body, and the device login's client id and code format.
 - Server and clients import the same schemas. The CLI parses every response with
   them, so a server change that breaks the shape fails loudly in the client.
 - Validation lives in the schemas, at the adapter boundary. The service trusts its
@@ -60,13 +52,12 @@ around it. Hexagonal (ports and adapters), without the ceremony.
 - An adapter does four things: parse the input with a contract schema, resolve the
   user with `getUserId` (from `lib/auth.ts`), call the service, map errors to its
   protocol. No business rules in adapters.
-- **REST** (`/api/todos`, see [rest-api.md](rest-api.md)): for non-browser clients. Bearer token or session cookie,
-  401 `unauthorized` without either, 404 `todo-not-found`, 400 `validation-failed`.
+- **REST** (`/api/todos`, see [rest-api.md](rest-api.md)): for non-browser clients.
 - **CLI** (`cli/`, see [cli.md](cli.md)): a client of the REST API, never of the database.
-- **Agent tools** (later): call the service directly. The user id comes from the
-  server session, never from a tool argument the model fills in.
-- **MCP**: over stdio inside the CLI (a REST client again), over HTTP inside the app
-  (calls the service, like the REST routes).
+- **Agent tools** (not built yet): call the service directly. The user id comes from
+  the server session, never from a tool argument the model fills in.
+- **MCP** (not built yet): over stdio inside the CLI (a REST client again), over HTTP
+  inside the app (calls the service, like the REST routes).
 
 ## Deliberately not done
 

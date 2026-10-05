@@ -17,29 +17,22 @@ Lissie will be an AI agent, which is not in the code yet.
 
 - Next.js 16 App Router at the repo root (`app/`).
 - One todo service, `lib/todo-service.ts`, with thin adapters around it; see [tech-docs/architecture.md](tech-docs/architecture.md).
-- npm workspaces: `contract/` (shared zod schemas) and `cli/` (the `todo-cat` CLI, a REST client on commander.js); see [tech-docs/workspaces.md](tech-docs/workspaces.md) and [tech-docs/cli.md](tech-docs/cli.md).
-- Biome for linting and formatting, configured in `biome.json`.
+- npm workspaces: `contract/` (shared zod schemas) and `cli/` (the `todo-cat` CLI, a REST client); see [tech-docs/workspaces.md](tech-docs/workspaces.md) and [tech-docs/cli.md](tech-docs/cli.md).
 - Drizzle ORM (v1 RC) on SQLite via `@libsql/client`; `lib/db.ts` is the only module that opens the database; see [tech-docs/database.md](tech-docs/database.md).
-- Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
 - Better Auth (email and password, bearer, device authorization); `getUserId` in `lib/auth.ts` is the only code that reads sessions; see [tech-docs/auth.md](tech-docs/auth.md).
-- Tailwind v4; shared UI styling lives in `components/ui/`, so pages compose those components instead of repeating class strings.
+- Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
+- Biome for linting and formatting; Tailwind v4, with shared UI styling in `components/ui/`, so pages compose those components instead of repeating class strings.
 
 ## Commands
 
-- `npm run dev`: start the dev server.
-- `npm run build`: production build.
-- `npm run lint`: Biome check (lint, format, import order); warnings fail it too.
-- `npm run typecheck`: TypeScript check of the root and every workspace.
-- `npm run format`: apply Biome formatting.
-- `npm run db:generate`: generate a migration from `lib/schema.ts` into `drizzle/`.
-- `npm run db:migrate`: apply pending migrations to the database in `DATABASE_URL`.
-- `npm run db:reset`: delete the local database file and migrate a fresh one.
+Every script is in `package.json`; these are the ones whose behavior the name doesn't tell you.
+
+- `npm run qa`: every check (Biome with warnings as errors, typecheck, production build, CLI build, Vitest, Playwright); CI runs the same script.
+- `npm run dev`: the dev server on port 3000; the Playwright and CLI tests start their own servers, so they don't need it.
 - `npm run db:seed`: migrate and (re)create the demo user `demo@todo-cat.dev` / `cat-person-2026` with demo todos.
-- `npm run auth:generate`: regenerate `lib/auth-schema.ts` from `lib/auth-options.ts` with the Better Auth CLI.
-- `npm test`: run the Vitest tests once.
-- `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
-- `npx todo-cat --help`: the CLI, built by `npm install` or `npm run build -w cli`; the `todo-cat-cli` skill teaches agents to manage someone's todos with it.
-- `npm run qa`: run all of the above checks; CI runs the same script.
+- `npx biome check --write <files>`: fix formatting and import order (`npm run format` only formats); name your files, because other sessions' uncommitted work may be in the tree.
+- `npx todo-cat --help`: the CLI, built by `npm install`; the `todo-cat-cli` skill teaches agents to manage someone's todos with it.
+- On a fresh checkout: `npm install`, copy `.env.example` to `.env`, `npm run db:seed`, and `npx playwright install chromium`.
 
 ## Definition of done
 
@@ -55,7 +48,7 @@ Lissie will be an AI agent, which is not in the code yet.
 
 - Next.js: `node_modules/next/dist/docs/`, which matches the installed version exactly.
 - Vendors that publish an `llms.txt`: start there and follow its links; for Drizzle that is https://orm.drizzle.team/llms.txt, which documents the v1 RC we use.
-- Installed skills in `.claude/skills/` (CopilotKit, Mastra, frontend design): load the matching skill before working with that library.
+- Skills in `.claude/skills/`: load the one that matches a library or area before working on it.
 - Skills shipped inside packages: drizzle-kit has them in `node_modules/drizzle-kit/skills/`.
 - Any other library: the ctx7 CLI from the `find-docs` skill (`npx ctx7@latest library …`, then `docs …`).
 - When docs and code disagree, the installed package's `.d.ts` files are the ground truth for the version we run.
@@ -72,7 +65,7 @@ Lissie will be an AI agent, which is not in the code yet.
 Index:
 
 - [architecture.md](tech-docs/architecture.md): the todo service, its ownership rules, the contract, and the adapters around them.
-- [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
+- [workspaces.md](tech-docs/workspaces.md): the workspace layout, why the contract is its own package, and npm workspace gotchas.
 - [database.md](tech-docs/database.md): Drizzle on SQLite, migrations, and how tests get their own databases.
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 - [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, and getting a bearer token with curl.
