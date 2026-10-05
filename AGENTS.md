@@ -17,7 +17,7 @@ Lissie will be an AI agent, which is not in the code yet.
 
 - Next.js 16 App Router at the repo root (`app/`).
 - One todo service, `lib/todo-service.ts`, with thin adapters around it; see [tech-docs/architecture.md](tech-docs/architecture.md).
-- npm workspaces: `contract/` (shared zod schemas) and `cli/` (the todo-cat CLI, still empty); see [tech-docs/workspaces.md](tech-docs/workspaces.md).
+- npm workspaces: `contract/` (shared zod schemas) and `cli/` (the `todo-cat` CLI, a REST client on commander.js); see [tech-docs/workspaces.md](tech-docs/workspaces.md) and [tech-docs/cli.md](tech-docs/cli.md).
 - Biome for linting and formatting, configured in `biome.json`.
 - Drizzle ORM (v1 RC) on SQLite via `@libsql/client`; `lib/db.ts` is the only module that opens the database; see [tech-docs/database.md](tech-docs/database.md).
 - Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
@@ -38,6 +38,7 @@ Lissie will be an AI agent, which is not in the code yet.
 - `npm run auth:generate`: regenerate `lib/auth-schema.ts` from `lib/auth-options.ts` with the Better Auth CLI.
 - `npm test`: run the Vitest tests once.
 - `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
+- `npx todo-cat --help`: the CLI, built by `npm install` or `npm run build -w cli`.
 - `npm run qa`: run all of the above checks; CI runs the same script.
 
 ## Definition of done
@@ -76,6 +77,7 @@ Index:
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 - [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, and getting a bearer token with curl.
 - [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
+- [cli.md](tech-docs/cli.md): the `todo-cat` CLI, its output and exit code rules, device login and token storage, the `/device` page, and its end-to-end test.
 
 ## Maintenance
 

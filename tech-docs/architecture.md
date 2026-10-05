@@ -46,9 +46,10 @@ around it. Hexagonal (ports and adapters), without the ceremony.
 
 - The `contract/` workspace (`@todo-cat/contract`, `contract/src/index.ts`) holds the
   zod schemas for todos, inputs, list filters, and the error body
-  `{ error: { code, message } }`.
-- It exports its TypeScript source with no build step; Turbopack, Vitest and tsx
-  compile it where it is imported.
+  `{ error: { code, message } }`, plus the few values server and CLI share for the
+  device login (`cliClientId`, `formatUserCode`).
+- It exports its TypeScript source with no build step; Turbopack, Vitest, tsx and the
+  CLI's esbuild bundle compile it where it is imported.
 - Server and clients import the same schemas. The CLI parses every response with
   them, so a server change that breaks the shape fails loudly in the client.
 - Validation lives in the schemas, at the adapter boundary. The service trusts its
@@ -61,7 +62,7 @@ around it. Hexagonal (ports and adapters), without the ceremony.
   protocol. No business rules in adapters.
 - **REST** (`/api/todos`, see [rest-api.md](rest-api.md)): for non-browser clients. Bearer token or session cookie,
   401 `unauthorized` without either, 404 `todo-not-found`, 400 `validation-failed`.
-- **CLI** (`cli/`): a client of the REST API, never of the database.
+- **CLI** (`cli/`, see [cli.md](cli.md)): a client of the REST API, never of the database.
 - **Agent tools** (later): call the service directly. The user id comes from the
   server session, never from a tool argument the model fills in.
 - **MCP**: over stdio inside the CLI (a REST client again), over HTTP inside the app

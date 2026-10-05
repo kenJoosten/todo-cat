@@ -30,6 +30,7 @@ section() {
 section lint "$bin/biome" check --error-on-warnings --colors=off
 section typecheck npm run --silent typecheck
 section build "$bin/next" build
+section build-cli npm run --silent build -w cli
 section unit "$bin/vitest" run
 section e2e "$bin/playwright" test
 

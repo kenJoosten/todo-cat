@@ -4,6 +4,7 @@ import { isAPIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { returnPath } from "./return-path";
 
 // What a failed sign-up or sign-in hands back to its form, so typed values survive the reset.
 export type AuthFormState = { error?: string; name?: string; email?: string };
@@ -50,7 +51,7 @@ export async function signUp(
   } catch (error) {
     return { error: formError(error), name, email };
   }
-  redirect("/");
+  redirect(returnPath(text(formData, "next")) ?? "/");
 }
 
 export async function signIn(
@@ -66,7 +67,7 @@ export async function signIn(
   } catch (error) {
     return { error: formError(error), email };
   }
-  redirect("/");
+  redirect(returnPath(text(formData, "next")) ?? "/");
 }
 
 export async function signOut() {

@@ -7,12 +7,13 @@ Vitest runs unit and integration tests; Playwright runs end-to-end tests in Chro
 - Test logic and synchronous components with Vitest; they run in milliseconds and need no server.
 - Test `async` Server Components, routing, and full user flows with Playwright, because Vitest cannot render `async` Server Components.
 - Colocate Vitest tests with their source as `*.test.ts` or `*.test.tsx`; Playwright specs live in `e2e/` as `*.spec.ts`.
+- The CLI's end-to-end test is a Vitest test (`cli/test/cli.test.ts`) that starts its own `next dev`; see [cli.md](cli.md).
 - The file extension picks the Vitest environment: `*.test.ts` runs in Node, `*.test.tsx` runs in jsdom (see the `projects` in `vitest.config.mts`).
 - Query the DOM by role and accessible name (`getByRole`), in both tools, so tests survive markup and styling changes.
 
 ## Commands
 
-- `npm run qa`: the full gate (Biome, typecheck, production build, Vitest, Playwright); see below.
+- `npm run qa`: the full gate (Biome, typecheck, production build, CLI build, Vitest, Playwright); see below.
 - `npm test`: run all Vitest tests once; `npm run test:watch` for watch mode.
 - `npm run test:e2e`: Playwright; it starts its own dev server, so nothing needs to be running.
 - `npx playwright install chromium`: one-time browser download on a new machine.
@@ -41,6 +42,7 @@ The e2e server must never collide with `npm run dev` or with another checkout ru
 
 - `E2E_PORT`: defaults to a free port the OS picks per run.
 - `E2E_DIST_DIR`: defaults to `.next-e2e`; keep the `.next-e2e` prefix so git and Biome ignore it.
+- The CLI test's `next dev` follows the same rules on its own: a spare port, dist dir `.next-e2e-cli`, and a temp database.
 - `E2E_DATABASE_URL`: defaults to `file:<fresh temp dir>/e2e.db`, handed to the server as `DATABASE_URL` and migrated by `drizzle-kit migrate` before `next dev` starts; the OS cleans up the temp dir.
 
 ## Gotchas

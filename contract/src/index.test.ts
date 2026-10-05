@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   errorBodySchema,
+  formatUserCode,
   newTodoSchema,
   todoListFilterSchema,
   todoUpdateSchema,
@@ -54,5 +55,15 @@ describe("errorBodySchema", () => {
       errorBodySchema.safeParse({ error: { code, message: "Nope" } }).success;
     expect(body("todo-not-found")).toBe(true);
     expect(body("forbidden")).toBe(false);
+  });
+});
+
+describe("formatUserCode", () => {
+  test("groups an eight-character code in fours", () => {
+    expect(formatUserCode("abcd2345")).toBe("ABCD-2345");
+  });
+
+  test("reads back a code that is already formatted", () => {
+    expect(formatUserCode("ABCD-2345")).toBe("ABCD-2345");
   });
 });

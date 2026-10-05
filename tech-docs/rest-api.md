@@ -1,6 +1,6 @@
 # REST API
 
-`/api/todos` is the todo service over HTTP for non-browser clients, starting with the CLI; see [architecture.md](architecture.md) for the rules every adapter follows.
+`/api/todos` is the todo service over HTTP for non-browser clients, such as the CLI ([cli.md](cli.md)); see [architecture.md](architecture.md) for the rules every adapter follows.
 
 ## Endpoints
 
@@ -42,7 +42,7 @@ curl -s http://localhost:3000/api/todos -H "authorization: Bearer $TOKEN" \
   -H 'content-type: application/json' -d '{"title":"Buy tuna","dueDate":"2026-10-31"}'
 ```
 
-The demo account exists after `npm run db:seed`. The CLI will get its token from the device authorization flow instead ([auth.md](auth.md)).
+The demo account exists after `npm run db:seed`. The CLI gets its token from the device authorization flow instead ([cli.md](cli.md)).
 
 ## Gotchas
 

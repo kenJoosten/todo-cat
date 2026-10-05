@@ -2,6 +2,18 @@
 // Adapters parse every input with these schemas; clients parse every response with them.
 import { z } from "zod";
 
+/** The client id the todo-cat CLI starts its device login with; the server accepts no other. */
+export const cliClientId = "todo-cat-cli";
+
+/**
+ * A device login's user code as the CLI prints it and /device shows it: `ABCD-EFGH`.
+ * Better Auth ignores the dash and the case when the code is entered.
+ */
+export function formatUserCode(code: string): string {
+  const plain = code.replace(/[^a-z0-9]/gi, "").toUpperCase();
+  return plain.length === 8 ? `${plain.slice(0, 4)}-${plain.slice(4)}` : plain;
+}
+
 /** A calendar date without time, `yyyy-mm-dd`; never converted to a JavaScript Date. */
 export const isoDateSchema = z.iso.date();
 

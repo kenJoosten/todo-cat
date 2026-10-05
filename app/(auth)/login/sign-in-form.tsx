@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { TextLink } from "@/components/ui/text-link";
 import { signIn } from "../../auth-actions";
 
-export function SignInForm() {
+export function SignInForm({ next }: { next?: string }) {
   const [state, action] = useActionState(signIn, {});
   return (
     <>
@@ -28,11 +28,17 @@ export function SignInForm() {
           autoComplete="current-password"
           required
         />
+        {next && <input type="hidden" name="next" value={next} />}
         <FormError message={state.error} />
         <SubmitButton>Sign in</SubmitButton>
       </Form>
       <FormNote>
-        New here? <TextLink href="/signup">Create an account</TextLink>
+        New here?{" "}
+        <TextLink
+          href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
+        >
+          Create an account
+        </TextLink>
       </FormNote>
     </>
   );

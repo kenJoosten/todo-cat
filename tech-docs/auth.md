@@ -10,6 +10,7 @@ Better Auth with email and password only, on the Drizzle database from `lib/db.t
 - `scripts/auth-cli-config.mts`: the config the Better Auth CLI loads.
 - `app/api/auth/[...all]/route.ts`: Better Auth's HTTP endpoints under `/api/auth/*`.
 - `app/auth-actions.ts`: the sign-up, sign-in and sign-out Server Actions behind the forms.
+- `app/device/`: the page where a signed-in user approves or denies a device login ([cli.md](cli.md)).
 
 ## Principles
 
@@ -17,6 +18,7 @@ Better Auth with email and password only, on the Drizzle database from `lib/db.t
 - It accepts the session cookie and `Authorization: Bearer <token>` alike, so callers never care which kind of client they serve.
 - Every page and action checks the session itself, server-side; there is no proxy (middleware) check, as both Next and Better Auth advise.
 - `/` redirects signed-out visitors to `/login`; the `(auth)` layout sends signed-in users from `/login` and `/signup` back to `/`.
+- `/login` and `/signup` take a `next` path to return to after signing in; `app/return-path.ts` drops anything that is not a path on this site.
 - The forms post to Server Actions that call `auth.api`, so they work before hydration and no auth client ships to the browser.
 - `nextCookies()` sets the session cookie from inside Server Actions, and it must stay the last plugin.
 - Failed sign-ups and sign-ins return a message per Better Auth error code (see `app/auth-actions.ts`); unknown errors are rethrown, not shown.
@@ -37,13 +39,13 @@ Better Auth with email and password only, on the Drizzle database from `lib/db.t
 - `betterAuth` comes from `better-auth/minimal`, which leaves out the Kysely adapter we do not use.
 - Server Actions instead of Better Auth's React client keep every session read server-side, behind `getUserId`.
 
-## Plugins enabled ahead of their clients
+## Plugins for API and CLI clients
 
 - Bearer: sign-in and sign-up responses carry the token in a `set-auth-token` header, and clients send it back as `Authorization: Bearer <token>`.
 - Bearer's `requireSignature` stays off, because the device flow hands out raw session tokens, which the plugin signs itself.
 - Device authorization uses the first-party flow: the CLI requests a code at `/api/auth/device/code`, the user approves it at `/device`, and the CLI polls `/api/auth/device/token` for a session token it then sends as a bearer token.
-- Only the client id `cliClientId` (`todo-cat-cli`) may start a device login; `validateClient` rejects any other.
-- The `/device` approval page does not exist yet; build it per the security requirements in Better Auth's device authorization docs.
+- Only the client id `cliClientId` (`todo-cat-cli`, from the contract) may start a device login; `validateClient` rejects any other.
+- Sign-out with a bearer token ends that session, which is how `todo-cat logout` revokes its token.
 
 ## Tests
 
