@@ -35,7 +35,8 @@ export default defineConfig({
   use: { baseURL, trace: "on-first-retry" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `next dev --port ${port}`,
+    // Migrate the e2e database first, so the server starts on the current schema.
+    command: `drizzle-kit migrate && next dev --port ${port}`,
     url: baseURL,
     env: {
       TODO_CAT_DIST_DIR: distDir,

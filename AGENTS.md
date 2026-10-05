@@ -18,6 +18,7 @@ Lissie will be an AI agent, which is not in the code yet.
 - Next.js 16 App Router at the repo root (`app/`).
 - npm workspaces: `contract/` (shared zod schemas) and `cli/` (the todo-cat CLI), both still empty; see [tech-docs/workspaces.md](tech-docs/workspaces.md).
 - Biome for linting and formatting, configured in `biome.json`.
+- Drizzle ORM (v1 RC) on SQLite via `@libsql/client`; `lib/db.ts` is the only module that opens the database; see [tech-docs/database.md](tech-docs/database.md).
 - Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
 
 ## Commands
@@ -27,6 +28,9 @@ Lissie will be an AI agent, which is not in the code yet.
 - `npm run lint`: Biome check (lint, format, import order); warnings fail it too.
 - `npm run typecheck`: TypeScript check of the root and every workspace.
 - `npm run format`: apply Biome formatting.
+- `npm run db:generate`: generate a migration from `lib/schema.ts` into `drizzle/`.
+- `npm run db:migrate`: apply pending migrations to the database in `DATABASE_URL`.
+- `npm run db:reset`: delete the local database file and migrate a fresh one.
 - `npm test`: run the Vitest tests once.
 - `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
 - `npm run qa`: run all of the above checks; CI runs the same script.
@@ -39,7 +43,16 @@ Lissie will be an AI agent, which is not in the code yet.
 ## Verify, don't remember
 
 - The technologies here are newer than your training data.
-- Verify APIs against current docs (for Next.js, `node_modules/next/dist/docs/`) instead of relying on memory.
+- Verify APIs against current docs (see Researching docs) instead of relying on memory.
+
+## Researching docs
+
+- Next.js: `node_modules/next/dist/docs/`, which matches the installed version exactly.
+- Vendors that publish an `llms.txt`: start there and follow its links; for Drizzle that is https://orm.drizzle.team/llms.txt, which documents the v1 RC we use.
+- Installed skills in `.claude/skills/` (CopilotKit, Mastra, frontend design): load the matching skill before working with that library.
+- Skills shipped inside packages: drizzle-kit has them in `node_modules/drizzle-kit/skills/`.
+- Any other library: the ctx7 CLI from the `find-docs` skill (`npx ctx7@latest library …`, then `docs …`).
+- When docs and code disagree, the installed package's `.d.ts` files are the ground truth for the version we run.
 
 ## Tech docs
 
@@ -53,6 +66,7 @@ Lissie will be an AI agent, which is not in the code yet.
 Index:
 
 - [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
+- [database.md](tech-docs/database.md): Drizzle on SQLite, migrations, and how tests get their own databases.
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 
 ## Maintenance

@@ -41,7 +41,7 @@ The e2e server must never collide with `npm run dev` or with another checkout ru
 
 - `E2E_PORT`: defaults to a free port the OS picks per run.
 - `E2E_DIST_DIR`: defaults to `.next-e2e`; keep the `.next-e2e` prefix so git and Biome ignore it.
-- `E2E_DATABASE_URL`: defaults to `file:<fresh temp dir>/e2e.db`, handed to the server as `DATABASE_URL`; the OS cleans up the temp dir.
+- `E2E_DATABASE_URL`: defaults to `file:<fresh temp dir>/e2e.db`, handed to the server as `DATABASE_URL` and migrated by `drizzle-kit migrate` before `next dev` starts; the OS cleans up the temp dir.
 
 ## Gotchas
 
@@ -50,5 +50,6 @@ The e2e server must never collide with `npm run dev` or with another checkout ru
 - `tsconfig.json` excludes `.next-e2e*`, so the e2e server's generated types cannot mask missing ones in `.next`.
 - That throwaway tsconfig sits next to the dist dir, not inside it, because Turbopack cannot read files inside its own dist dir.
 - Playwright workers re-read `playwright.config.ts`, so every generated value is stored in `process.env` once and inherited by the workers.
+- Vitest aliases `server-only` to its empty module, because outside React Server Components the real one throws on import.
 - Vitest test globals are off, so Testing Library cannot clean up between tests on its own; `vitest.setup.ts` does it for the jsdom project.
 - Vite resolves the `@/*` path alias from `tsconfig.json` natively (`resolve.tsconfigPaths`), so the `vite-tsconfig-paths` plugin from the Next guide is not needed.
