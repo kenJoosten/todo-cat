@@ -18,6 +18,8 @@ export const todoSchema = z.object({
 });
 export type Todo = z.infer<typeof todoSchema>;
 
+export const todoListSchema = z.array(todoSchema);
+
 export const newTodoSchema = z.object({
   title: titleSchema,
   dueDate: isoDateSchema.nullable().default(null),

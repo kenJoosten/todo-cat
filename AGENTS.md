@@ -74,6 +74,7 @@ Index:
 - [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
 - [database.md](tech-docs/database.md): Drizzle on SQLite, migrations, and how tests get their own databases.
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
+- [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, and getting a bearer token with curl.
 - [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
 
 ## Maintenance
