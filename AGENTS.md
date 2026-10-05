@@ -16,7 +16,8 @@ Lissie will be an AI agent, which is not in the code yet.
 ## Stack and layout
 
 - Next.js 16 App Router at the repo root (`app/`).
-- npm workspaces: `contract/` (shared zod schemas) and `cli/` (the todo-cat CLI), both still empty; see [tech-docs/workspaces.md](tech-docs/workspaces.md).
+- One todo service, `lib/todo-service.ts`, with thin adapters around it; see [tech-docs/architecture.md](tech-docs/architecture.md).
+- npm workspaces: `contract/` (shared zod schemas) and `cli/` (the todo-cat CLI, still empty); see [tech-docs/workspaces.md](tech-docs/workspaces.md).
 - Biome for linting and formatting, configured in `biome.json`.
 - Drizzle ORM (v1 RC) on SQLite via `@libsql/client`; `lib/db.ts` is the only module that opens the database; see [tech-docs/database.md](tech-docs/database.md).
 - Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
@@ -33,6 +34,7 @@ Lissie will be an AI agent, which is not in the code yet.
 - `npm run db:generate`: generate a migration from `lib/schema.ts` into `drizzle/`.
 - `npm run db:migrate`: apply pending migrations to the database in `DATABASE_URL`.
 - `npm run db:reset`: delete the local database file and migrate a fresh one.
+- `npm run db:seed`: migrate and (re)create the demo user `demo@todo-cat.dev` / `cat-person-2026` with demo todos.
 - `npm run auth:generate`: regenerate `lib/auth-schema.ts` from `lib/auth-options.ts` with the Better Auth CLI.
 - `npm test`: run the Vitest tests once.
 - `npm run test:e2e`: run the Playwright tests in Chromium; starts its own dev server.
@@ -68,6 +70,7 @@ Lissie will be an AI agent, which is not in the code yet.
 
 Index:
 
+- [architecture.md](tech-docs/architecture.md): the todo service, its ownership rules, the contract, and the adapters around them.
 - [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
 - [database.md](tech-docs/database.md): Drizzle on SQLite, migrations, and how tests get their own databases.
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.

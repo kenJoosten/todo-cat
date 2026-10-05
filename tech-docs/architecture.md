@@ -24,21 +24,31 @@ around it. Hexagonal (ports and adapters), without the ceremony.
   an id exists.
 - The service returns contract types (plain objects, dates as ISO strings), never
   Drizzle rows.
-- Rule violations are a few typed errors with stable codes (`todo-not-found`,
-  `validation-failed`). Adapters map them; they don't invent their own.
+- Rule violations are a few typed errors with stable codes from the contract's
+  `errorCodeSchema`. Adapters map them; they don't invent their own.
+- The service throws `TodoNotFoundError` (`todo-not-found`); `validation-failed` is what
+  an adapter reports when a contract schema rejects the input.
+- `replaceTodos` exists only for the dev seed, which needs past timestamps; no adapter
+  exposes it.
 
 ## Data
 
-- `todos`: id, owner (user id, cascade delete with the user), title, optional due date,
-  done, created at, completed at.
+- `todos` in `lib/schema.ts`: id, owner (`user_id`, cascade delete with the user), title,
+  optional due date, done, created at, completed at.
 - A due date is a date without time and stays an ISO `yyyy-mm-dd` string everywhere.
   A JavaScript `Date` is midnight UTC and shows the previous day west of Greenwich.
-- `completed at` is set when a todo is marked done and cleared when it's reopened.
+- `completed at` is set when a todo is marked done (kept when it's marked done again) and
+  cleared when it's reopened.
+- Lists sort open before done, then by due date (none last), then newest first.
+- The text filter uses `instr`, not `like`, so `%` and `_` in a search match literally.
 
 ## The contract
 
-- The `contract/` workspace (`@todo-cat/contract`) holds the zod schemas for todos,
-  inputs, list filters, and the error body `{ error: { code, message } }`.
+- The `contract/` workspace (`@todo-cat/contract`, `contract/src/index.ts`) holds the
+  zod schemas for todos, inputs, list filters, and the error body
+  `{ error: { code, message } }`.
+- It exports its TypeScript source with no build step; Turbopack, Vitest and tsx
+  compile it where it is imported.
 - Server and clients import the same schemas. The CLI parses every response with
   them, so a server change that breaks the shape fails loudly in the client.
 - Validation lives in the schemas, at the adapter boundary. The service trusts its
@@ -47,7 +57,7 @@ around it. Hexagonal (ports and adapters), without the ceremony.
 ## Adapters
 
 - An adapter does four things: parse the input with a contract schema, resolve the
-  user with `getUserId` (from `lib/session.ts`), call the service, map errors to its
+  user with `getUserId` (from `lib/auth.ts`), call the service, map errors to its
   protocol. No business rules in adapters.
 - **REST** (`/api/todos`): for non-browser clients. Bearer token or session cookie,
   401 `unauthorized` without either, 404 `todo-not-found`, 400 `validation-failed`.
@@ -66,5 +76,5 @@ around it. Hexagonal (ports and adapters), without the ceremony.
 ## Tests
 
 - The service is tested against a temp database with **two users for every use case**:
-  one user never sees, changes, or deletes the other's todos.
+  one user never sees, changes, or deletes the other's todos (`lib/todo-service.test.ts`).
 - Adapter tests cover only the mapping: 401 without a user, error codes, status codes.
