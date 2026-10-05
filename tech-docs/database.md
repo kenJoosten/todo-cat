@@ -20,7 +20,8 @@ SQLite through Drizzle ORM and the `@libsql/client` driver; the file lives at `D
 
 - `drizzle/` holds one folder per migration (`<timestamp>_<name>/migration.sql` plus `snapshot.json`); v1 has no journal file.
 - `npm run db:generate` prints "No schema changes" and writes nothing while the schema is empty; `drizzle/` appears with the first table.
-- `npm run db:migrate` and `npm run db:reset` work without `drizzle/`; they then only create the `__drizzle_migrations` log table.
+- With no migrations, migrating only creates the `__drizzle_migrations` log table.
+- `drizzle/.gitkeep` keeps the folder in git while it is empty: Drizzle's runtime `migrate()` throws on a missing folder, which only shows on a fresh checkout because drizzle-kit creates the folder locally.
 - `db:reset` refuses any `DATABASE_URL` that is not a `file:` URL, so it can never wipe a remote database.
 
 ## Tests
