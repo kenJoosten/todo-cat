@@ -7,3 +7,44 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# todo-cat
+
+todo-cat is a to-do list web app kept by Lissie, a cat with attitude.
+Lissie will be an AI agent, which is not in the code yet.
+
+## Stack and layout
+
+- Next.js 16 App Router at the repo root (`app/`).
+- npm workspaces: `contract/` (shared zod schemas) and `cli/` (the todo-cat CLI), both still empty; see [tech-docs/workspaces.md](tech-docs/workspaces.md).
+- Biome for linting and formatting, configured in `biome.json`.
+
+## Commands
+
+- `npm run dev`: start the dev server.
+- `npm run build`: production build.
+- `npm run lint`: Biome check (lint, format, import order); must pass before committing.
+- `npm run format`: apply Biome formatting.
+
+## Verify, don't remember
+
+- The technologies here are newer than your training data.
+- Verify APIs against current docs (for Next.js, `node_modules/next/dist/docs/`) instead of relying on memory.
+
+## Tech docs
+
+`tech-docs/` holds project-specific technical docs; agents are the primary audience.
+
+- Describe approach, principles, design decisions with their reasons, and gotchas.
+- Point to the central files instead of copying code.
+- Leave out anything an agent finds out by reading the code.
+- Describe the current state only; delete outdated content instead of adding caveats.
+
+Index:
+
+- [workspaces.md](tech-docs/workspaces.md): the workspace layout and why it exists before its content does.
+
+## Maintenance
+
+- When your change invalidates a line here or in `tech-docs/`, or teaches a costly lesson, update AGENTS.md and the tech docs in the same change.
+- Prefer deleting over adding, pointers over prose, and one sentence per bullet.
