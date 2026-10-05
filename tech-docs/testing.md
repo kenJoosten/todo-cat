@@ -24,7 +24,8 @@ Vitest runs unit and integration tests; Playwright runs end-to-end tests in Chro
 - Every section's full output goes to `.qa/qa.log`, which is overwritten on each run.
 - All sections run even after a failure, so one run reports every problem.
 - Biome runs with `--error-on-warnings`, because Biome reports some real mistakes (unused variables, for one) as warnings that exit 0.
-- `npm run typecheck` checks the root with `tsc` and runs the `typecheck` script of every workspace that has one; give a workspace that gets its own `tsconfig.json` such a script.
+- `npm run typecheck` runs `next typegen` first, because globals like `LayoutProps` only exist once Next has generated `.next/types`; a fresh checkout fails `tsc` without it.
+- `npm run typecheck` then checks the root with `tsc` and runs the `typecheck` script of every workspace that has one; give a workspace that gets its own `tsconfig.json` such a script.
 
 ## CI
 
@@ -46,6 +47,7 @@ The e2e server must never collide with `npm run dev` or with another checkout ru
 
 - Next 16 holds a lock in the dist dir that refuses a second `next dev` there, which is why the e2e server needs its own dist dir (via `TODO_CAT_DIST_DIR` in `next.config.ts`; Next already uses `NEXT_DIST_DIR` internally).
 - Next adds its dist dir's type globs to whatever tsconfig it uses, so with a custom dist dir the e2e server gets a throwaway `<dist dir>.tsconfig.json` that extends the real one, which keeps `tsconfig.json` untouched.
+- `tsconfig.json` excludes `.next-e2e*`, so the e2e server's generated types cannot mask missing ones in `.next`.
 - That throwaway tsconfig sits next to the dist dir, not inside it, because Turbopack cannot read files inside its own dist dir.
 - Playwright workers re-read `playwright.config.ts`, so every generated value is stored in `process.env` once and inherited by the workers.
 - Vitest test globals are off, so Testing Library cannot clean up between tests on its own; `vitest.setup.ts` does it for the jsdom project.
