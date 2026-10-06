@@ -22,7 +22,7 @@ Lissie is an AI agent who chats with the user on `/` and lists, adds and complet
 - Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
 - Lissie: one Mastra agent, served to a CopilotKit chat over AG-UI by the runtime at `/api/copilotkit`, which guards every route; see [tech-docs/agent.md](tech-docs/agent.md).
 - Better Auth (email and password, bearer, device authorization); `getUserId` in `lib/auth.ts` is the only code that reads sessions; see [tech-docs/auth.md](tech-docs/auth.md).
-- Tailwind v4; shared UI styling lives in `components/ui/`, so pages compose those components instead of repeating class strings.
+- Tailwind v4; shared UI styling lives in `components/ui/`, so pages compose those components instead of repeating class strings; the design direction, tokens and CopilotKit styling are in [tech-docs/ui.md](tech-docs/ui.md).
 
 ## Commands
 
@@ -30,7 +30,7 @@ Every script is in `package.json`; these are the ones whose behavior the name do
 
 - `npm run qa`: every check (Biome with warnings as errors, typecheck, production build, CLI build, Vitest, Playwright); CI runs the same script.
 - `npm run test:e2e:model`: the Playwright specs that call the real model (`*.model.spec.ts`); needs `OPENROUTER_API_KEY` in `.env`, and never runs in QA or CI.
-- `npm run test:e2e:model:tools`: only the model spec for Lissie's tools (asks her to add "buy milk", then checks the sidebar).
+- `npm run test:e2e:model:tools`: only the model spec for Lissie's tools (asks her to add "buy milk", then checks the list).
 - `npm run dev`: the dev server on port 3000; the Playwright and CLI tests start their own servers, so they don't need it.
 - `npm run db:seed`: migrate and (re)create the demo user `demo@todo-cat.dev` / `cat-person-2026` with demo todos.
 - `npx biome check --write <files>`: fix formatting and import order (`npm run format` only formats); name your files, because other sessions' uncommitted work may be in the tree.
@@ -74,7 +74,8 @@ Index:
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 - [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, getting a bearer token with curl, and the `/api-tester` page.
 - [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
-- [agent.md](tech-docs/agent.md): Lissie's Mastra agent, her todo tools and how they get the user id, memory, the CopilotKit runtime and its route guard, and the chat and sidebar on `/`.
+- [agent.md](tech-docs/agent.md): Lissie's Mastra agent, her todo tools and how they get the user id, memory, the CopilotKit runtime and its route guard, and the chat on `/`.
+- [ui.md](tech-docs/ui.md): the design direction, where tokens and shared components live, dark mode, and CopilotKit styling gotchas.
 - [cli.md](tech-docs/cli.md): the `todo-cat` CLI, its output and exit code rules, device login and token storage, the `/device` page, and its end-to-end test.
 
 ## Maintenance

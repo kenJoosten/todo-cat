@@ -1,6 +1,6 @@
 # Lissie, the agent
 
-Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a CopilotKit runtime inside the Next app. Her tools list, add and complete the signed-in user's todos; a read-only sidebar next to the chat shows the list.
+Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a CopilotKit runtime inside the Next app. Her tools list, add and complete the signed-in user's todos, the same list the user edits next to the chat.
 
 ## Files
 
@@ -18,7 +18,6 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 - `app/api/copilotkit/[[...slug]]/guard.ts`: the authorization hooks for every runtime route.
 - `app/lissie-chat.tsx` and `app/lissie-chat.css`: the chat (`CopilotKit` and `CopilotChat` from `@copilotkit/react-core/v2`), themed with Lissie's palette.
 - `app/lissie-tool-calls.tsx`: inside the chat's provider, renders every tool call as its line and refreshes the page after a change.
-- `app/todo-sidebar.tsx`: the read-only list next to the chat, a server component.
 
 ## Versions
 
@@ -43,11 +42,11 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 - The persona lives in the prompt: Lissie comments in character on every todo she adds or marks done, and has opinions about todos that feed her.
 - No rename, reschedule or delete tools yet; the prompt tells her to say so.
 
-## The chat and the sidebar
+## The chat and the list
 
 - One wildcard `useRenderTool` renderer draws every tool call as one line from `toolCallLine`, which parses the arguments and the result with the tools' own schemas; JSON never reaches the user.
 - The bridge streams a server tool call's start, arguments, end and result in one flush after the tool has run (`streamServerToolCalls` is off), so a line appears once the call is done.
-- The sidebar is a server component fed by `listTodos`; `LissieToolCalls` subscribes to the shared `lissie` agent and calls `router.refresh()` when an `addTodo` or `setTodoDone` result arrives, which renders it again without touching the chat's state.
+- The list on `/` gets its todos from the page, a server component; `LissieToolCalls` subscribes to the shared `lissie` agent and calls `router.refresh()` when an `addTodo` or `setTodoDone` result arrives, which renders the page and the list again without touching the chat's state.
 - When you add a route or upgrade CopilotKit, check `fetch-router` in `@copilotkit/runtime` for new routes and add them to the guard and to `everyRoute` in the test.
 
 ## Memory
@@ -76,5 +75,5 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 - A run streams, so the scripted model is only called while the test reads the response body; reset `model.toolCall` after that, not after the response arrives.
 - `lib/lissie/todo-tools.test.ts` runs the tool executors on a temp database with two users: each tool reaches only the signed-in user's todos, and refuses to run without a user id in the request context.
 - `lib/lissie/tool-call-line.test.ts` covers the line for every tool, state and failure.
-- `e2e/lissie.spec.ts` (QA) loads the chat without errors or rejected runtime calls, shows a conversation and a tool call written straight into Mastra memory, and shows the user's todos in the sidebar.
-- `e2e/lissie.model.spec.ts` sends a real message and reloads; `e2e/lissie-tools.model.spec.ts` asks Lissie to add "buy milk" and finds it in the sidebar, live and after a reload. Both need a real `OPENROUTER_API_KEY` and run only with `npm run test:e2e:model` (`npm run test:e2e:model:tools` for the second alone), never in QA or CI.
+- `e2e/lissie.spec.ts` (QA) loads the chat without errors or rejected runtime calls, shows a conversation and a tool call written straight into Mastra memory, and shows todos changed through the REST API on the list.
+- `e2e/lissie.model.spec.ts` sends a real message and reloads; `e2e/lissie-tools.model.spec.ts` asks Lissie to add "buy milk" and finds it on the list, live and after a reload. Both need a real `OPENROUTER_API_KEY` and run only with `npm run test:e2e:model` (`npm run test:e2e:model:tools` for the second alone), never in QA or CI.

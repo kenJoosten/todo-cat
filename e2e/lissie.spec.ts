@@ -121,25 +121,27 @@ test("the chat shows the conversation kept in Mastra memory", async ({
   await expect(page.getByText(answer)).toBeVisible();
 });
 
-test("the sidebar shows the user's own open and done todos", async ({
+test("the list shows todos that changed outside the page, such as through the API", async ({
   page,
 }) => {
   await signUp(page, "Ines");
-  const sidebar = page.getByRole("complementary", { name: "Your list" });
-  await expect(sidebar.getByText("Nothing open.")).toBeVisible();
+  const list = page.getByRole("region", { name: "Your list" });
+  await expect(list.getByText("Nothing open.")).toBeVisible();
 
-  // The REST API, with the page's session cookie: Lissie is the chat's only write path.
+  // The REST API, with the page's session cookie, stands in for another client.
   const add = (title: string, dueDate: string | null = null) =>
     page.request.post("/api/todos", { data: { title, dueDate } });
-  await add("Buy tuna", "2026-10-09");
+  await add("Buy tuna", "2031-10-09");
   const fed = await (await add("Feed the cat")).json();
   await page.request.patch(`/api/todos/${fed.id}`, { data: { done: true } });
 
   await page.reload();
-  const open = sidebar.getByRole("region", { name: /^Open/ });
-  const done = sidebar.getByRole("region", { name: /^Done/ });
-  await expect(open.getByRole("listitem")).toHaveText(["Buy tuna9 Oct"]);
-  await expect(done.getByRole("listitem")).toHaveText(["Feed the cat"]);
+  const open = list.getByRole("region", { name: /^Open/ });
+  const done = list.getByRole("region", { name: /^Done/ });
+  await expect(open.getByRole("listitem")).toHaveText([/^Buy tuna\s*9 Oct/]);
+  await expect(
+    done.getByRole("checkbox", { name: "Feed the cat" }),
+  ).toBeChecked();
 });
 
 test("the replayed chat shows Lissie's tool calls as readable lines", async ({

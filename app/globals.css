@@ -1,25 +1,91 @@
 @import "tailwindcss";
 
-/* Lissie's palette: periwinkle ground, indigo ink, cat-eye amber for the one main action. */
+/*
+ * "Blue hour on the windowsill" (tech-docs/ui.md): Lissie watches the household from the
+ * sill as the sky turns periwinkle. Light mode is early blue hour, dark mode the same sill
+ * at night. Every color is a token here; components use the utilities (bg-ground, text-ink,
+ * ...) and never a raw color, so both modes follow from this block alone.
+ */
 @theme {
-  --color-ground: #eef0f7;
+  /* The page, and the raised surfaces on it: the chat panel and form controls. */
+  --color-ground: #e4e6f4;
+  --color-surface: #f6f7fc;
   --color-ink: #1e1b3a;
-  --color-muted: #5b5875;
-  --color-line: #c9cbe0;
+  --color-muted: #595677;
+  --color-line: #c3c6e0;
+  /* Her eyes: the one main action, checkboxes, focus rings, the claw marks. Never text on
+     the light ground; text on amber is always on-amber. */
   --color-amber: #f2b705;
   --color-amber-deep: #d9a204;
+  --color-on-amber: #1e1b3a;
   --color-danger: #b4232c;
-  /* Danger on an ink ground, where the regular red is too dark to read. */
-  --color-danger-light: #ff8a8f;
+  /* A dark panel that stays dark in both modes, such as the API tester's response. */
+  --color-night: #1e1b3a;
+  --color-on-night: #e6e7f6;
+  --color-danger-on-night: #ff8a8f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-ground: #141331;
+    --color-surface: #1d1b40;
+    --color-ink: #e6e7f6;
+    --color-muted: #a4a2c8;
+    --color-line: #36346a;
+    --color-amber: #f5be1a;
+    --color-amber-deep: #ffd24d;
+    --color-danger: #ff8a8f;
+    --color-night: #0d0c24;
+  }
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-atkinson);
+  --font-mono: var(--font-atkinson-mono);
+  --font-display: var(--font-imbue);
+}
+
+:root {
+  color-scheme: light dark;
 }
 
 body {
   background: var(--color-ground);
   color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-amber);
+  color: var(--color-on-amber);
+}
+
+/* The claw marks (components/ui/claw-marks.tsx): each scratch draws left to right, one
+   after the other, once, when a todo is checked off while you watch. */
+@keyframes claw-swipe {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.claw-swipe path {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: claw-swipe 180ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.claw-swipe path:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.claw-swipe path:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .claw-swipe path {
+    animation: none;
+  }
 }

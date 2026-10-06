@@ -51,7 +51,7 @@ function ToolCallRow({
 /**
  * Inside the chat's CopilotKit provider: draws each of Lissie's tool calls as one line,
  * live and in the replayed history alike, and refreshes the page's server data (and so the
- * sidebar) whenever a call that changes the list comes back.
+ * list) whenever a call that changes the list comes back.
  */
 export function LissieToolCalls({ agentId }: { agentId: string }) {
   useRenderTool(

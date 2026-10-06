@@ -18,7 +18,7 @@ const labels = {
 // An explicit thread id makes the chat replay its history, and turns off the welcome screen.
 export function LissieChat({ threadId }: { threadId: string }) {
   return (
-    <div className="lissie-chat h-[32rem] overflow-hidden rounded-md border border-line bg-white/60">
+    <div className="lissie-chat h-full overflow-hidden rounded-lg border border-line bg-surface">
       <CopilotKit
         runtimeUrl="/api/copilotkit"
         useSingleEndpoint={false}

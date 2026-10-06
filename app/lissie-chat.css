@@ -1,15 +1,16 @@
-/* CopilotKit's v2 chat reads shadcn-style tokens on [data-copilotkit]; these map them to
-   Lissie's palette from globals.css. The extra class wins over CopilotKit's own dark-mode
-   tokens, because the rest of the app has no dark mode either. */
+/* CopilotKit's v2 chat reads shadcn-style tokens on [data-copilotkit]; these map them to the
+   app's tokens from globals.css, which switch with the color scheme, so the chat follows
+   light and dark mode without CopilotKit's own `.dark` class (which the app never sets).
+   The extra class makes these win over CopilotKit's defaults. See tech-docs/ui.md. */
 .lissie-chat [data-copilotkit] {
   --background: transparent;
   --foreground: var(--color-ink);
-  --card: white;
+  --card: var(--color-surface);
   --card-foreground: var(--color-ink);
-  --popover: white;
+  --popover: var(--color-surface);
   --popover-foreground: var(--color-ink);
   --primary: var(--color-amber);
-  --primary-foreground: var(--color-ink);
+  --primary-foreground: var(--color-on-amber);
   --secondary: var(--color-ground);
   --secondary-foreground: var(--color-ink);
   --muted: var(--color-ground);
@@ -22,6 +23,58 @@
   --input: var(--color-line);
   --ring: var(--color-ink);
   --radius: 0.375rem;
-  --cpk-font-sans: var(--font-geist-sans);
-  color-scheme: light;
+  --cpk-font-sans: var(--font-atkinson);
+}
+
+/* A few parts of the input use fixed colors instead of the tokens (bg-white, #444, #0d0d0d,
+   with grey `dark:` variants), so they are styled by their test ids. */
+.lissie-chat [data-testid="copilot-chat-input"] {
+  background-color: var(--color-ground);
+  border: 1px solid var(--color-line);
+  box-shadow: none;
+}
+
+.lissie-chat [data-testid="copilot-chat-input"]:focus-within {
+  border-color: var(--color-ink);
+}
+
+.lissie-chat [data-testid="copilot-add-menu-button"] {
+  color: var(--color-muted);
+}
+
+/* Sending is the chat's main action: her amber, like Add on the list. */
+.lissie-chat [data-testid="copilot-send-button"] {
+  background-color: var(--color-amber);
+  color: var(--color-on-amber);
+}
+
+.lissie-chat [data-testid="copilot-send-button"]:disabled {
+  background-color: var(--color-line);
+  color: var(--color-muted);
+}
+
+.lissie-chat [data-testid="copilot-chat-textarea"]::placeholder {
+  color: var(--color-muted);
+}
+
+/* Messages are Tailwind Typography `prose`, which sets its colors on the element itself and
+   only inverts them under CopilotKit's `.dark` class; these map them to the tokens instead. */
+.lissie-chat [data-copilotkit] .cpk\:prose {
+  --tw-prose-body: var(--color-ink);
+  --tw-prose-headings: var(--color-ink);
+  --tw-prose-lead: var(--color-muted);
+  --tw-prose-links: var(--color-ink);
+  --tw-prose-bold: var(--color-ink);
+  --tw-prose-counters: var(--color-muted);
+  --tw-prose-bullets: var(--color-muted);
+  --tw-prose-hr: var(--color-line);
+  --tw-prose-quotes: var(--color-ink);
+  --tw-prose-quote-borders: var(--color-line);
+  --tw-prose-captions: var(--color-muted);
+  --tw-prose-kbd: var(--color-ink);
+  --tw-prose-code: var(--color-ink);
+  --tw-prose-pre-code: var(--color-ink);
+  --tw-prose-pre-bg: var(--color-ground);
+  --tw-prose-th-borders: var(--color-line);
+  --tw-prose-td-borders: var(--color-line);
 }

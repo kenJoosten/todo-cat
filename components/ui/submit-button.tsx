@@ -8,13 +8,14 @@ import { type ButtonStyle, buttonClass } from "./button";
 export function SubmitButton({
   children,
   variant,
-}: { children: ReactNode } & Pick<ButtonStyle, "variant">) {
+  size,
+}: { children: ReactNode } & Pick<ButtonStyle, "variant" | "size">) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={pending}
-      className={`${buttonClass({ variant })} disabled:cursor-wait`}
+      className={`${buttonClass({ variant, size })} disabled:cursor-wait`}
     >
       {children}
     </button>

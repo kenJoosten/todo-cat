@@ -71,6 +71,7 @@ function CodeForm({ code, error }: { code?: string; error?: string }) {
       <Field
         label="Code"
         name="user_code"
+        mono
         defaultValue={code}
         autoComplete="off"
         autoCapitalize="characters"

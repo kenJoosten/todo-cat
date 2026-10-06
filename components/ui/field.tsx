@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 
 const controlClass =
-  "rounded-md border border-line bg-white px-3 text-ink outline-none transition-colors placeholder:text-muted focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-amber";
+  "rounded-md border border-line bg-surface px-3 text-ink outline-none transition-colors placeholder:text-muted focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-amber";
 
 // The label above a control, with an optional hint under it; the control's id is its name.
 function Labelled({

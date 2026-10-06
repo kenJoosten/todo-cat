@@ -52,11 +52,11 @@ around it. Hexagonal (ports and adapters), without the ceremony.
 - An adapter does four things: parse the input with a contract schema, resolve the
   user with `getUserId` (from `lib/auth.ts`), call the service, map errors to its
   protocol. No business rules in adapters.
+- **Browser** (`app/todo-actions.ts`): Server Actions for the list on `/`; they check the session before the input, return the contract's error body instead of throwing, and call `refresh()` from `next/cache` after a change so the page renders the service's state.
 - **REST** (`/api/todos`, see [rest-api.md](rest-api.md)): for non-browser clients.
 - **CLI** (`cli/`, see [cli.md](cli.md)): a client of the REST API, never of the database.
 - **Chat** (`/api/copilotkit`, see [agent.md](agent.md)): the CopilotKit runtime serving Lissie; it resolves the user with `getUserId` and puts that user in Mastra's request context for her memory and her tools.
 - **Agent tools** (`lib/lissie/todo-tools.ts`): `listTodos`, `addTodo` and `setTodoDone` call the service directly. Their input schemas are built from the contract and take no user id; the owner comes from the request context the chat route builds from the session, and a tool without one refuses to run.
-- The browser has no write path of its own yet: the sidebar on `/` is read-only and Lissie's tools are how the user changes the list there.
 - **MCP** (not built yet): over stdio inside the CLI (a REST client again), over HTTP
   inside the app (calls the service, like the REST routes).
 
