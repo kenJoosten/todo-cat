@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:model": "E2E_MODEL=1 playwright test",
+    "test:e2e:model:tools": "E2E_MODEL=1 playwright test e2e/lissie-tools.model.spec.ts",
     "qa": "scripts/qa.sh",
     "auth:generate": "auth generate --config scripts/auth-cli-config.mts --output lib/auth-schema.ts --yes && biome check --write lib/auth-schema.ts"
   },

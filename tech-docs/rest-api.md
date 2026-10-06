@@ -44,6 +44,13 @@ curl -s http://localhost:3000/api/todos -H "authorization: Bearer $TOKEN" \
 
 The demo account exists after `npm run db:seed`. The CLI gets its token from the device authorization flow instead ([cli.md](cli.md)).
 
+## The API tester page
+
+- `/api-tester` sends any endpoint from the browser and checks each answer against the contract and the status codes above; production answers 404.
+- It signs in with `credentials: "omit"`, so the browser stores no cookie and the bearer token is the only identity, as for the CLI.
+- `app/api-tester/requests.ts` holds its copy of the endpoint list; change it with the endpoints, or the tester reports the new behavior as a contract break.
+- `e2e/api-tester.spec.ts` drives it through add, list, delete, 404 and 401.
+
 ## Gotchas
 
 - `set-auth-token` holds `<session token>.<signature>`; send the whole value, since the bearer plugin accepts it signed or unsigned.

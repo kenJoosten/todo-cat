@@ -3,6 +3,7 @@
 // thread id they are given. So this guard decides, per route, before the runtime runs.
 import type { CopilotRuntimeHooks } from "@copilotkit/runtime/v2";
 import { getUserId } from "@/lib/auth";
+import { inspectorEnabled } from "@/lib/lissie/inspector";
 import { lissieThreadId } from "@/lib/lissie/thread";
 
 export const lissieAgentId = "lissie";
@@ -49,6 +50,13 @@ export const guard: CopilotRuntimeHooks = {
     const ownThread = lissieThreadId(userId);
     switch (route.method) {
       case "info":
+        return;
+      // The dev inspector's runtime routes: both Intelligence-only, so with no
+      // Intelligence they carry no user data (204 / 404), but stay 404 until the
+      // NEXT_PUBLIC_COPILOTKIT_INSPECTOR flag turns the overlay on.
+      case "inspector/metadata":
+      case "inspector/learning":
+        if (!inspectorEnabled) reject(404);
         return;
       case "agent/run":
       case "agent/connect":
