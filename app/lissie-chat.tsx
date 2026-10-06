@@ -3,6 +3,7 @@
 import { CopilotChat, CopilotKit } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
 import type { ReactNode } from "react";
+import { lissieCatalog } from "@/lib/lissie/a2ui-catalog";
 import { inspectorEnabled } from "@/lib/lissie/inspector";
 import "./lissie-chat.css";
 import { ClearChat } from "./lissie-clear-chat";
@@ -14,6 +15,10 @@ const labels = {
   chatDisclaimerText:
     "Lissie is a cat, and an AI. She changes your list when you ask; check what she did.",
 };
+
+// The cards her tools return as A2UI operations are drawn from her catalog. Only her tools
+// build cards, so the agent is not sent the catalog's schemas to generate surfaces from.
+const a2ui = { catalog: lissieCatalog, includeSchema: false };
 
 // The chat with Lissie, under its heading with the button that clears it. The thread id
 // comes from the server (the user's current thread), and the runtime at /api/copilotkit
@@ -31,6 +36,7 @@ export function LissieChat({
       runtimeUrl="/api/copilotkit"
       useSingleEndpoint={false}
       enableInspector={inspectorEnabled}
+      a2ui={a2ui}
     >
       <LissieToolCalls agentId="lissie" />
       <div className="flex flex-col gap-4">

@@ -1,5 +1,6 @@
 import type { Todo } from "@todo-cat/contract";
 import { describe, expect, test } from "vitest";
+import { progressCard } from "./progress-card";
 import { toolCallLine } from "./tool-call-line";
 
 const milk: Todo = {
@@ -109,6 +110,27 @@ describe("setTodoDone", () => {
         json({ error: notFound }),
       ),
     ).toEqual({ text: "Couldn't find that todo", state: "failed" });
+  });
+});
+
+describe("showProgress", () => {
+  test("says she counted, and leaves the numbers to the card", () => {
+    expect(toolCallLine("showProgress", {}, undefined)).toEqual({
+      text: "Counting your todos…",
+      state: "running",
+    });
+    const card = progressCard({ total: 2, done: 1, open: 1 });
+    expect(toolCallLine("showProgress", {}, json(card))).toEqual({
+      text: "Counted your todos",
+      state: "done",
+    });
+  });
+
+  test("a refused call fails", () => {
+    expect(toolCallLine("showProgress", {}, refused)).toEqual({
+      text: "Couldn't count your todos",
+      state: "failed",
+    });
   });
 });
 

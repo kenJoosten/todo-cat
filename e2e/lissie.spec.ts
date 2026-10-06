@@ -2,6 +2,7 @@ import { createClient } from "@libsql/client";
 import { LibSQLStore } from "@mastra/libsql";
 import { Memory } from "@mastra/memory";
 import { expect, type Page, test } from "@playwright/test";
+import { progressCard } from "../lib/lissie/progress-card";
 import { lissieThreadId } from "../lib/lissie/thread";
 
 // Runs in QA and CI, so it never sends a message: that would call the model.
@@ -178,6 +179,41 @@ test("the replayed chat shows Lissie's tool calls as readable lines", async ({
   await expect(page.getByText("Added “Buy milk”")).toBeVisible();
   await expect(page.getByText(reply)).toBeVisible();
   await expect(page.getByText('"todo"')).toHaveCount(0);
+});
+
+test("the replayed chat shows Lissie's progress card, drawn from her catalog", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const email = await signUp(page, "Ada");
+  await rememberConversation(email, [
+    "How am I doing?",
+    [
+      {
+        type: "tool-invocation",
+        toolInvocation: {
+          state: "result",
+          toolCallId: "call-1",
+          toolName: "showProgress",
+          args: {},
+          result: progressCard({ total: 4, done: 3, open: 1 }),
+        },
+      },
+      { type: "text", text: "Three down. I watched, which counts as helping." },
+    ],
+  ]);
+
+  await page.reload();
+  await expect(page.getByText("Counted your todos")).toBeVisible();
+  const bar = page.getByRole("progressbar", { name: "Todos done" });
+  await expect(bar).toBeVisible();
+  await expect(bar).toHaveAttribute("aria-valuenow", "3");
+  await expect(bar).toHaveAttribute("aria-valuemax", "4");
+  await expect(page.getByText("3 of 4 done")).toBeVisible();
+  await expect(page.getByText("1 still open")).toBeVisible();
+  await expect(page.getByText("a2ui_operations")).toHaveCount(0);
+  expect(errors).toEqual([]);
 });
 
 test("clearing the chat empties it, and Lissie forgets it after a reload", async ({

@@ -1,11 +1,13 @@
 # Lissie, the agent
 
-Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a CopilotKit runtime inside the Next app. Her tools list, add and complete the signed-in user's todos, the same list the user edits next to the chat.
+Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a CopilotKit runtime inside the Next app. Her tools list, add and complete the signed-in user's todos, the same list the user edits next to the chat, and show a progress card in the chat.
 
 ## Files
 
 - `lib/lissie/agent.ts`: the `lissie` agent, her system prompt (which ends with today's UTC date, for due dates), her tools, and her memory options.
-- `lib/lissie/todo-tools.ts`: her tools, `listTodos`, `addTodo` and `setTodoDone`, an adapter on the todo service.
+- `lib/lissie/todo-tools.ts`: her tools, `listTodos`, `addTodo`, `setTodoDone` and `showProgress`, an adapter on the todo service.
+- `lib/lissie/progress-card.ts`: the progress card's A2UI component tree and the operations `showProgress` returns (see Cards).
+- `lib/lissie/a2ui-catalog.tsx` and `a2ui-catalog-id.ts`: her A2UI catalog, which the chat registers, and its id, which the cards name.
 - `lib/lissie/todo-tool-schemas.ts`: the tools' input and output schemas, built from the contract and shared with the chat.
 - `lib/lissie/request-context.ts`: `lissieRequestContext(userId, threadId)`, the Mastra request context of one run, and `userIdKey`.
 - `lib/lissie/tool-call-line.ts`: the one line the chat shows for a tool call.
@@ -23,7 +25,7 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 
 ## Versions
 
-- `@mastra/*`, `@ag-ui/*`, `@copilotkit/*` and `rxjs` are pinned exactly; the bridge (`@ag-ui/mastra`) and the runtime are tested against specific Mastra and AG-UI versions, so upgrade them together.
+- `@mastra/*`, `@ag-ui/*`, `@copilotkit/*`, `@a2ui/*` and `rxjs` are pinned exactly, the A2UI packages to the versions `@copilotkit/*` depends on; the bridge (`@ag-ui/mastra`) and the runtime are tested against specific Mastra and AG-UI versions, so upgrade them together.
 - Import CopilotKit from the `/v2` subpaths only; the package roots are the deprecated v1 API and mix silently.
 
 ## Authorization
@@ -51,6 +53,16 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 - The list on `/` gets its todos from the page, a server component; `LissieToolCalls` subscribes to the shared `lissie` agent and calls `router.refresh()` when an `addTodo` or `setTodoDone` result arrives, which renders the page and the list again without touching the chat's state.
 - When you add a route or upgrade CopilotKit, check `fetch-router` in `@copilotkit/runtime` for new routes and add them to the guard and to `everyRoute` in the test.
 
+## Cards
+
+- `showProgress` counts the user's todos with the todo service and returns the card itself as A2UI operations under `a2ui_operations` (`createSurface`, `updateComponents`, `updateDataModel`), so the model never produces the numbers and no second model call draws the card.
+- The runtime's `a2ui` option adds the A2UI middleware, which turns those operations in a tool result into an `a2ui-surface` activity message; the chat renders it with the catalog on `<CopilotKit a2ui>`.
+- The component tree is a constant in `progress-card.ts`; the numbers are only in the data model, bound with `{ path }` or `${/path}` placeholders in a `formatString` Text, so the tree is the same for every list.
+- No generated surfaces: `injectA2UITool: false` on the runtime and on the `MastraAgent`; the bridge otherwise adds a UI-generating `generate_a2ui` tool whenever a run's `forwardedProps` ask for it, and the browser writes those.
+- The chat sets `includeSchema: false`, so runs don't carry the catalog's schemas and generation guidelines, which only a generating tool reads.
+- The catalog is the basic catalog plus `ProgressBar` and a `Card` in the app's palette; a component listed later in the `Catalog` replaces the basic one of the same name.
+- History replay adds the card back after the tool result, as an activity message with the middleware's id (`a2ui-surface-<tool call id>`); the bridge drops activity messages when the browser resends them, so they are never stored.
+
 ## Memory
 
 - Mastra memory is message history only (`lastMessages: 20` in context), in the app's SQLite file; Mastra creates its `mastra_*` tables itself on first use, outside our Drizzle migrations.
@@ -64,6 +76,9 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 
 ## Gotchas
 
+- A2UI's binder decides which props are bindable by reading zod 3 internals, and A2UI ships its own copy of zod 3; schemas from the app's zod (or `zod/v3`) send `tsc` into infinite instantiation, so catalog props are built from A2UI's own schemas (`SliderApi.schema.pick(...)`, `DynamicNumberSchema`).
+- A bindable prop must be a union with `{ path }` (`DynamicNumberSchema`, `DynamicStringSchema`); a plain `number` prop gets the binding object, not the value.
+- Biome reports `${/path}` in a string literal as a template mistake; `progress-card.ts` builds the placeholders with a helper.
 - The runtime forwards `authorization` and `x-*` request headers to the agent, and the bridge passes them to the model call, which would send a user's bearer token to OpenRouter; `forwardHeaders` in the route denies them all.
 - An explicit `threadId` on `CopilotChat` turns off its welcome screen; that is the price of history replay.
 - `<CopilotKit agentId>` does not reach `CopilotChat`, which then asks for an agent named `default`; name the agent on `CopilotChat`.
@@ -77,7 +92,9 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 - It covers 401 on every route, 404 on every unused route, another user's run, connect, stop (during a live run), reads and clear, the memory written per user, the bearer token never reaching the model, history after a simulated restart, and clearing a chat (a new thread, the old one forgotten and 404).
 - With `model.toolCall` set, the scripted model calls that tool first; the tests check that a run's tools act for the session's user whatever the model sends, and that tool calls replay after a restart and are not stored twice when the browser resends them.
 - A run streams, so the scripted model is only called while the test reads the response body; reset `model.toolCall` after that, not after the response arrives.
-- `lib/lissie/todo-tools.test.ts` runs the tool executors on a temp database with two users: each tool reaches only the signed-in user's todos, and refuses to run without a user id in the request context.
+- `lib/lissie/todo-tools.test.ts` runs the tool executors on a temp database with two users: each tool reaches only the signed-in user's todos, and refuses to run without a user id in the request context; `showProgress`'s operations pass A2UI's message schema and the middleware's validator (`@ag-ui/a2ui-toolkit`) against the chat's catalog, and its counts match the rows.
+- `lib/lissie/a2ui-catalog.test.tsx` renders the progress card's operations through the catalog, so a binding that doesn't resolve fails there.
+- The route test also covers the card arriving as an activity, no UI-generating tool reaching the model even when `forwardedProps` ask for one, and the card replayed after a restart.
 - `lib/lissie/tool-call-line.test.ts` covers the line for every tool, state and failure.
-- `e2e/lissie.spec.ts` (QA) loads the chat without errors or rejected runtime calls, shows a conversation and a tool call written straight into Mastra memory, clears a conversation for good, and shows todos changed through the REST API on the list.
+- `e2e/lissie.spec.ts` (QA) loads the chat without errors or rejected runtime calls, shows a conversation, a tool call and a progress card written straight into Mastra memory, clears a conversation for good, and shows todos changed through the REST API on the list.
 - `e2e/lissie.model.spec.ts` sends a real message and reloads; `e2e/lissie-tools.model.spec.ts` asks Lissie to add "buy milk" and finds it on the list, live and after a reload. Both need a real `OPENROUTER_API_KEY` and run only with `npm run test:e2e:model` (`npm run test:e2e:model:tools` for the second alone), never in QA or CI.

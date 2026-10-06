@@ -10,6 +10,7 @@ import {
   listTodosOutput,
   setTodoDoneInput,
   setTodoDoneOutput,
+  showProgressOutput,
 } from "./todo-tool-schemas";
 
 export type ToolCallLine = {
@@ -86,6 +87,16 @@ function doneLine(
     : { text: `Reopened ${title}`, state: "done" };
 }
 
+// The card itself follows the line, drawn from the same result.
+function progressLine(result: string | undefined): ToolCallLine {
+  if (result === undefined) {
+    return { text: "Counting your todos…", state: "running" };
+  }
+  return parseResult(showProgressOutput, result)
+    ? { text: "Counted your todos", state: "done" }
+    : { text: "Couldn't count your todos", state: "failed" };
+}
+
 /** The line for a call to `name` with `parameters`; `result` is undefined while it runs. */
 export function toolCallLine(
   name: string,
@@ -99,6 +110,8 @@ export function toolCallLine(
       return addLine(parameters, result);
     case "setTodoDone":
       return doneLine(parameters, result);
+    case "showProgress":
+      return progressLine(result);
     default:
       return {
         text: result === undefined ? `Using ${name}…` : `Used ${name}`,

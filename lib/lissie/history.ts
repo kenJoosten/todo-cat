@@ -21,10 +21,32 @@ function splitMessageId(storedId: string, index: number) {
     : `${storedId}-agui-text-${index}`;
 }
 
+/**
+ * The card a tool result draws, as the A2UI middleware emits it live: an activity message
+ * keyed by the tool call, carrying the result's `a2ui_operations` (see progress-card.ts).
+ * Mastra stores only the result, so a replayed conversation would lose the card without it.
+ */
+function a2uiCard(toolCallId: string, result: unknown): Message[] {
+  const operations =
+    typeof result === "object" && result !== null && "a2ui_operations" in result
+      ? result.a2ui_operations
+      : undefined;
+  if (!Array.isArray(operations) || operations.length === 0) return [];
+  return [
+    {
+      id: `a2ui-surface-${toolCallId}`,
+      role: "activity",
+      activityType: "a2ui-surface",
+      content: { a2ui_operations: operations },
+    },
+  ];
+}
+
 // One stored assistant message holds its steps as parts, in order: text, tool calls,
 // more text. The chat shows each run of text as an assistant message and each run of
 // tool calls as an assistant message with `toolCalls`, followed by one tool message per
-// result, the way the bridge streams them live (a result's content is its JSON).
+// result, the way the bridge streams them live (a result's content is its JSON), and the
+// card of a result that draws one.
 function assistantMessages(message: MastraDBMessage): Message[] {
   const messages: Message[] = [];
   let text = "";
@@ -55,6 +77,7 @@ function assistantMessages(message: MastraDBMessage): Message[] {
           ? { error: call.errorText ?? "The tool failed." }
           : {}),
       });
+      messages.push(...a2uiCard(call.toolCallId, call.result));
     }
     calls = [];
   };

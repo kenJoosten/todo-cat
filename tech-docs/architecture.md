@@ -56,7 +56,7 @@ around it. Hexagonal (ports and adapters), without the ceremony.
 - **REST** (`/api/todos`, see [rest-api.md](rest-api.md)): for non-browser clients.
 - **CLI** (`cli/`, see [cli.md](cli.md)): a client of the REST API, never of the database.
 - **Chat** (`/api/copilotkit`, see [agent.md](agent.md)): the CopilotKit runtime serving Lissie; it resolves the user with `getUserId` and puts that user in Mastra's request context for her memory and her tools.
-- **Agent tools** (`lib/lissie/todo-tools.ts`): `listTodos`, `addTodo` and `setTodoDone` call the service directly. Their input schemas are built from the contract and take no user id; the owner comes from the request context the chat route builds from the session, and a tool without one refuses to run.
+- **Agent tools** (`lib/lissie/todo-tools.ts`): `listTodos`, `addTodo`, `setTodoDone` and `showProgress` call the service directly. Their input schemas are built from the contract and take no user id; the owner comes from the request context the chat route builds from the session, and a tool without one refuses to run.
 - **MCP** (not built yet): over stdio inside the CLI (a REST client again), over HTTP
   inside the app (calls the service, like the REST routes).
 

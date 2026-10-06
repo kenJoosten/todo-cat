@@ -74,7 +74,7 @@ Index:
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 - [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, getting a bearer token with curl, and the `/api-tester` page.
 - [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
-- [agent.md](tech-docs/agent.md): Lissie's Mastra agent, her todo tools and how they get the user id, memory, the CopilotKit runtime and its route guard, and the chat on `/`.
+- [agent.md](tech-docs/agent.md): Lissie's Mastra agent, her todo tools and how they get the user id, her A2UI cards, memory, the CopilotKit runtime and its route guard, and the chat on `/`.
 - [ui.md](tech-docs/ui.md): the design direction, where tokens and shared components live, dark mode, and CopilotKit styling gotchas.
 - [cli.md](tech-docs/cli.md): the `todo-cat` CLI, its output and exit code rules, device login and token storage, the `/device` page, and its end-to-end test.
 
