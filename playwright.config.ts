@@ -27,8 +27,15 @@ writeFileSync(
   }),
 );
 
+// Specs that call the real model run only through `npm run test:e2e:model` (E2E_MODEL=1),
+// never in QA or CI.
+const modelSpecs = "**/*.model.spec.ts";
+
 export default defineConfig({
   testDir: "e2e",
+  ...(process.env.E2E_MODEL
+    ? { testMatch: modelSpecs }
+    : { testIgnore: modelSpecs }),
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",

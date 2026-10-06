@@ -1,0 +1,27 @@
+/* CopilotKit's v2 chat reads shadcn-style tokens on [data-copilotkit]; these map them to
+   Lissie's palette from globals.css. The extra class wins over CopilotKit's own dark-mode
+   tokens, because the rest of the app has no dark mode either. */
+.lissie-chat [data-copilotkit] {
+  --background: transparent;
+  --foreground: var(--color-ink);
+  --card: white;
+  --card-foreground: var(--color-ink);
+  --popover: white;
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-amber);
+  --primary-foreground: var(--color-ink);
+  --secondary: var(--color-ground);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-ground);
+  --muted-foreground: var(--color-muted);
+  --accent: var(--color-ground);
+  --accent-foreground: var(--color-ink);
+  --destructive: var(--color-danger);
+  --destructive-foreground: var(--color-danger);
+  --border: var(--color-line);
+  --input: var(--color-line);
+  --ring: var(--color-ink);
+  --radius: 0.375rem;
+  --cpk-font-sans: var(--font-geist-sans);
+  color-scheme: light;
+}

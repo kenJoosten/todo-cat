@@ -8,7 +8,9 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { getUserId } from "@/lib/auth";
 import { user } from "@/lib/auth-schema";
 import { db } from "@/lib/db";
+import { lissieThreadId } from "@/lib/lissie/thread";
 import { signOut } from "./auth-actions";
+import { LissieChat } from "./lissie-chat";
 
 export default async function Home() {
   const userId = await getUserId(await headers());
@@ -21,7 +23,7 @@ export default async function Home() {
 
   return (
     <PageShell>
-      <PageTitle lead="Your list isn't here yet. Lissie is working on it, at her own pace.">
+      <PageTitle lead="Lissie keeps your list. She'll talk about it, and nothing else.">
         Hi, {me.name}.
       </PageTitle>
       <Form action={signOut}>
@@ -29,6 +31,7 @@ export default async function Home() {
           <SubmitButton variant="secondary">Sign out</SubmitButton>
         </div>
       </Form>
+      <LissieChat threadId={lissieThreadId(userId)} />
     </PageShell>
   );
 }

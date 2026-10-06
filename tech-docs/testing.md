@@ -8,6 +8,7 @@ Vitest runs unit and integration tests; Playwright runs end-to-end tests in Chro
 - Test `async` Server Components, routing, and full user flows with Playwright, because Vitest cannot render `async` Server Components.
 - Colocate Vitest tests with their source as `*.test.ts` or `*.test.tsx`; Playwright specs live in `e2e/` as `*.spec.ts`.
 - The CLI's end-to-end test is a Vitest test that starts its own `next dev`; see [cli.md](cli.md).
+- Nothing in QA or CI calls the model: Vitest replaces `lib/lissie/model.ts` with a scripted model, and Playwright skips `*.model.spec.ts` unless `E2E_MODEL` is set, which `npm run test:e2e:model` does; see [agent.md](agent.md).
 - The file extension picks the Vitest environment: `*.test.ts` runs in Node, `*.test.tsx` runs in jsdom.
 - Query the DOM by role and accessible name (`getByRole`), in both tools, so tests survive markup and styling changes.
 
@@ -15,6 +16,7 @@ Vitest runs unit and integration tests; Playwright runs end-to-end tests in Chro
 
 - `npm test`: all Vitest tests once; `npm test -- <path>` runs one file.
 - `npm run test:e2e`: Playwright; it starts its own dev server, so nothing needs to be running; `npm run test:e2e -- e2e/<name>.spec.ts` runs one spec.
+- `npm run test:e2e:model`: only the Playwright specs that call the real model, with the key from `.env`.
 - `npx playwright install chromium`: one-time browser download on a new machine.
 
 ## QA script

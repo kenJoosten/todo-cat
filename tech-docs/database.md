@@ -6,6 +6,7 @@ SQLite through Drizzle ORM and the `@libsql/client` driver; the file lives at `D
 
 - `lib/db.ts` is the only module that opens the database; import `db` from it, never create another client.
 - It imports `server-only`, so a Client Component that reaches it fails the build instead of shipping database code to the browser.
+- Mastra memory keeps its `mastra_*` tables in the same file, on the client from `lib/db.ts`; Mastra creates and upgrades them itself, so they are in neither `lib/schema.ts` nor `drizzle/` (see [agent.md](agent.md)).
 - Tables live in `lib/schema.ts`, which also re-exports Better Auth's generated tables (see [auth.md](auth.md)); only `lib/todo-service.ts` touches `todos` (see [architecture.md](architecture.md)).
 - Schema changes always go through `npm run db:generate` and a committed migration, applied with `npm run db:migrate`, never `drizzle-kit push`, so every database (local, tests, e2e, production) reaches the same schema the same way.
 

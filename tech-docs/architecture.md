@@ -54,6 +54,7 @@ around it. Hexagonal (ports and adapters), without the ceremony.
   protocol. No business rules in adapters.
 - **REST** (`/api/todos`, see [rest-api.md](rest-api.md)): for non-browser clients.
 - **CLI** (`cli/`, see [cli.md](cli.md)): a client of the REST API, never of the database.
+- **Chat** (`/api/copilotkit`, see [agent.md](agent.md)): the CopilotKit runtime serving Lissie; it resolves the user with `getUserId` and scopes her memory to that user, and reaches no todos until she has tools.
 - **Agent tools** (not built yet): call the service directly. The user id comes from
   the server session, never from a tool argument the model fills in.
 - **MCP** (not built yet): over stdio inside the CLI (a REST client again), over HTTP

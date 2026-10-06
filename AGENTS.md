@@ -11,7 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # todo-cat
 
 todo-cat is a to-do list web app kept by Lissie, a cat with attitude.
-Lissie will be an AI agent, which is not in the code yet.
+Lissie is an AI agent who chats with the user on `/`; she has no tools yet.
 
 ## Stack and layout
 
@@ -20,6 +20,7 @@ Lissie will be an AI agent, which is not in the code yet.
 - npm workspaces: `contract/` (shared zod schemas) and `cli/` (the `todo-cat` CLI, a REST client); see [tech-docs/workspaces.md](tech-docs/workspaces.md) and [tech-docs/cli.md](tech-docs/cli.md).
 - Drizzle ORM (v1 RC) on SQLite via `@libsql/client`; `lib/db.ts` is the only module that opens the database; see [tech-docs/database.md](tech-docs/database.md).
 - Vitest for unit and integration tests, Playwright for end-to-end tests; see [tech-docs/testing.md](tech-docs/testing.md).
+- Lissie: one Mastra agent, served to a CopilotKit chat over AG-UI by the runtime at `/api/copilotkit`, which guards every route; see [tech-docs/agent.md](tech-docs/agent.md).
 - Better Auth (email and password, bearer, device authorization); `getUserId` in `lib/auth.ts` is the only code that reads sessions; see [tech-docs/auth.md](tech-docs/auth.md).
 - Tailwind v4; shared UI styling lives in `components/ui/`, so pages compose those components instead of repeating class strings.
 
@@ -28,6 +29,7 @@ Lissie will be an AI agent, which is not in the code yet.
 Every script is in `package.json`; these are the ones whose behavior the name doesn't tell you.
 
 - `npm run qa`: every check (Biome with warnings as errors, typecheck, production build, CLI build, Vitest, Playwright); CI runs the same script.
+- `npm run test:e2e:model`: the Playwright specs that call the real model (`*.model.spec.ts`); needs `OPENROUTER_API_KEY` in `.env`, and never runs in QA or CI.
 - `npm run dev`: the dev server on port 3000; the Playwright and CLI tests start their own servers, so they don't need it.
 - `npm run db:seed`: migrate and (re)create the demo user `demo@todo-cat.dev` / `cat-person-2026` with demo todos.
 - `npx biome check --write <files>`: fix formatting and import order (`npm run format` only formats); name your files, because other sessions' uncommitted work may be in the tree.
@@ -50,6 +52,7 @@ Every script is in `package.json`; these are the ones whose behavior the name do
 - Vendors that publish an `llms.txt`: start there and follow its links; for Drizzle that is https://orm.drizzle.team/llms.txt, which documents the v1 RC we use.
 - Skills in `.claude/skills/`: load the one that matches a library or area before working on it.
 - Skills shipped inside packages: drizzle-kit has them in `node_modules/drizzle-kit/skills/`.
+- Mastra packages ship docs for the installed version in `node_modules/@mastra/*/dist/docs/`.
 - Any other library: the ctx7 CLI from the `find-docs` skill (`npx ctx7@latest library …`, then `docs …`).
 - When docs and code disagree, the installed package's `.d.ts` files are the ground truth for the version we run.
 
@@ -70,6 +73,7 @@ Index:
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 - [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, and getting a bearer token with curl.
 - [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
+- [agent.md](tech-docs/agent.md): Lissie's Mastra agent, memory, the CopilotKit runtime and its route guard, and the chat on `/`.
 - [cli.md](tech-docs/cli.md): the `todo-cat` CLI, its output and exit code rules, device login and token storage, the `/device` page, and its end-to-end test.
 
 ## Maintenance
