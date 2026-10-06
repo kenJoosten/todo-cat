@@ -1,20 +1,32 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import {
+  Atkinson_Hyperlegible_Mono,
+  Atkinson_Hyperlegible_Next,
+  Imbue,
+} from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Imbue for titles, Atkinson Hyperlegible for reading and typing, its mono only for codes;
+// see tech-docs/ui.md.
+const imbue = Imbue({
+  variable: "--font-imbue",
   subsets: ["latin"],
+  axes: ["opsz"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Next has no metrics for the Atkinson faces to size a fallback font with, so name one instead.
+const atkinson = Atkinson_Hyperlegible_Next({
+  variable: "--font-atkinson",
   subsets: ["latin"],
+  fallback: ["system-ui", "sans-serif"],
+  adjustFontFallback: false,
 });
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
+const atkinsonMono = Atkinson_Hyperlegible_Mono({
+  variable: "--font-atkinson-mono",
   subsets: ["latin"],
+  fallback: ["ui-monospace", "monospace"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
@@ -26,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}
+      className={`${imbue.variable} ${atkinson.variable} ${atkinsonMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>

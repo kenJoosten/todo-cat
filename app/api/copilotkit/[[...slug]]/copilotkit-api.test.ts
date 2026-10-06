@@ -79,9 +79,14 @@ vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
 const { db } = await import("@/lib/db");
 const authRoute = await import("../../auth/[...all]/route");
 const route = await import("./route");
+const { clearLissieConversation, currentLissieThreadId } = await import(
+  "@/lib/lissie/conversation"
+);
 const { lissieHistory } = await import("@/lib/lissie/history");
 const { lissieThreadId } = await import("@/lib/lissie/thread");
-const { addTodo, getTodo, listTodos } = await import("@/lib/todo-service");
+const { addTodo, getTodo, listTodos, updateTodo } = await import(
+  "@/lib/todo-service"
+);
 await migrate(db, { migrationsFolder: "drizzle" });
 
 afterAll(() => {
@@ -190,6 +195,8 @@ function everyRoute(thread: string): [Method, string][] {
 const alice = await signUp("Alice");
 const bob = await signUp("Bob");
 const carol = await signUp("Carol");
+const dana = await signUp("Dana");
+const erin = await signUp("Erin");
 
 describe("without a valid user, every route answers 401", () => {
   for (const [method, path] of everyRoute(alice.thread)) {
@@ -508,5 +515,182 @@ describe("a run that does not name the caller's own thread is not found", () => 
       body: runInput(alice.thread, "Hi"),
     });
     expect(response.status).toBe(404);
+  });
+});
+
+describe("clearing the chat", () => {
+  async function run(threadId: string, text: string) {
+    const response = await call("POST", "/agent/lissie/run", {
+      token: dana.token,
+      body: runInput(threadId, text),
+    });
+    if (response.ok) await response.text();
+    return response.status;
+  }
+
+  test("starts a new, empty thread and forgets the old one", async () => {
+    expect(await run(dana.thread, "Remind me to call the vet.")).toBe(200);
+    expect(await lissieHistory(dana.thread)).toHaveLength(2);
+
+    await clearLissieConversation(dana.id);
+    const fresh = await currentLissieThreadId(dana.id);
+    expect(fresh).not.toBe(dana.thread);
+    expect(await lissieHistory(dana.thread)).toEqual([]);
+    expect(await lissieHistory(fresh)).toEqual([]);
+
+    expect(await run(fresh, "Add brush the cat.")).toBe(200);
+    expect((await lissieHistory(fresh)).map((m) => m.content)).toEqual([
+      "Add brush the cat.",
+      model.reply,
+    ]);
+  });
+
+  test("leaves the old thread unreachable", async () => {
+    const before = model.calls.length;
+    expect(await run(dana.thread, "Hi again.")).toBe(404);
+    expect(model.calls.length).toBe(before);
+    const connect = await call("POST", "/agent/lissie/connect", {
+      token: dana.token,
+      body: runInput(dana.thread, ""),
+    });
+    expect(connect.status).toBe(404);
+    const messages = await call("GET", `/threads/${dana.thread}/messages`, {
+      token: dana.token,
+    });
+    expect(messages.status).toBe(404);
+  });
+
+  test("keeps the new thread the user's own", async () => {
+    const fresh = await currentLissieThreadId(dana.id);
+    const response = await call("POST", "/agent/lissie/run", {
+      token: alice.token,
+      body: runInput(fresh, "Read me Dana's chat."),
+    });
+    expect(response.status).toBe(404);
+  });
+
+  test("touches no one else's conversation", async () => {
+    expect(await currentLissieThreadId(alice.id)).toBe(alice.thread);
+    expect(await lissieHistory(alice.thread)).not.toEqual([]);
+  });
+});
+
+describe("Lissie's progress card", () => {
+  afterAll(() => {
+    model.toolCall = undefined;
+  });
+
+  /** Erin's thread after a restart, as the chat gets it back when the page loads. */
+  async function replay() {
+    new InMemoryAgentRunner().clearThreads();
+    vi.resetModules();
+    const restarted = await import("./route");
+    const response = await restarted.POST(
+      new Request(`${base}/agent/lissie/connect`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${erin.token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(runInput(erin.thread, "")),
+      }),
+    );
+    const snapshot = (await events(response)).find(
+      (event) => event.type === "MESSAGES_SNAPSHOT",
+    ) as { messages: Message[] } | undefined;
+    return { restarted, messages: snapshot?.messages ?? [] };
+  }
+
+  test("draws the tool's own card, and no tool that generates UI reaches the model", async () => {
+    await addTodo(erin.id, { title: "Buy tuna", dueDate: null });
+    const fed = await addTodo(erin.id, {
+      title: "Feed the cat",
+      dueDate: null,
+    });
+    await updateTodo(erin.id, fed.id, { done: true });
+    model.toolCall = { toolName: "showProgress", input: {} };
+    const before = model.calls.length;
+    // The browser's forwarded props ask for the UI-generating tool; none is added.
+    const response = await call("POST", "/agent/lissie/run", {
+      token: erin.token,
+      body: {
+        ...runInput(erin.thread, "How am I doing?"),
+        forwardedProps: { injectA2UITool: true },
+      },
+    });
+    expect(response.status).toBe(200);
+    const runEvents = await events(response);
+    model.toolCall = undefined;
+
+    const result = runEvents.find(
+      (event) => event.type === "TOOL_CALL_RESULT",
+    ) as { toolCallId: string; content: string } | undefined;
+    const { a2ui_operations } = JSON.parse(result?.content ?? "null");
+    expect(a2ui_operations[2].updateDataModel.value).toEqual({
+      total: 2,
+      done: 1,
+      open: 1,
+    });
+    const cards = runEvents.filter(
+      (event) => event.type === "ACTIVITY_SNAPSHOT",
+    );
+    expect(cards).toEqual([
+      expect.objectContaining({
+        messageId: `a2ui-surface-${result?.toolCallId}`,
+        activityType: "a2ui-surface",
+        content: { a2ui_operations },
+      }),
+    ]);
+
+    const offered = model.calls
+      .slice(before)
+      .flatMap(({ tools }) => (tools ?? []).map((tool) => tool.name));
+    expect(new Set(offered)).toEqual(
+      new Set(["listTodos", "addTodo", "setTodoDone", "showProgress"]),
+    );
+  });
+
+  test("the card comes back after a restart, and resending it stores nothing", async () => {
+    const { restarted, messages } = await replay();
+    expect(messages.map((message) => message.role)).toEqual([
+      "user",
+      "assistant",
+      "tool",
+      "activity",
+      "assistant",
+    ]);
+    const [, , tool, card] = messages;
+    if (tool.role !== "tool") throw new Error("Expected the tool result");
+    expect(card).toEqual({
+      id: `a2ui-surface-${tool.toolCallId}`,
+      role: "activity",
+      activityType: "a2ui-surface",
+      content: {
+        a2ui_operations: JSON.parse(String(tool.content)).a2ui_operations,
+      },
+    });
+
+    const next = runInput(erin.thread, "Thanks.");
+    const resent = await restarted.POST(
+      new Request(`${base}/agent/lissie/run`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${erin.token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          ...next,
+          messages: [...messages, ...next.messages],
+        }),
+      }),
+    );
+    expect(resent.status).toBe(200);
+    await resent.text();
+    const history = await lissieHistory(erin.thread);
+    expect(history.map((message) => message.id)).toEqual([
+      ...messages.map((message) => message.id),
+      next.messages[0].id,
+      expect.any(String),
+    ]);
   });
 });

@@ -8,6 +8,7 @@ import {
   TodoNotFoundError,
   updateTodo,
 } from "../todo-service";
+import { progressCard } from "./progress-card";
 import { userIdKey } from "./request-context";
 import {
   addTodoInput,
@@ -16,6 +17,8 @@ import {
   listTodosOutput,
   setTodoDoneInput,
   setTodoDoneOutput,
+  showProgressInput,
+  showProgressOutput,
 } from "./todo-tool-schemas";
 
 // Lissie's adapter on the todo service. Mastra parses each input with the tool's
@@ -70,9 +73,32 @@ export const setTodoDoneTool = createTool({
   },
 });
 
+// The counts come from the list here, never from the model, and the tool returns the card
+// itself as A2UI operations: the chat draws it straight from the result.
+export const showProgressTool = createTool({
+  id: "showProgress",
+  description:
+    "Shows the user a card in the chat with how many of their todos are done and how many are still open, counted from their list.",
+  inputSchema: showProgressInput,
+  outputSchema: showProgressOutput,
+  requestContextSchema,
+  execute: async (_input, { requestContext }) => {
+    const todos = await listTodos(requestContext.get(userIdKey), {
+      status: "all",
+    });
+    const done = todos.filter((todo) => todo.done).length;
+    return progressCard({
+      total: todos.length,
+      done,
+      open: todos.length - done,
+    });
+  },
+});
+
 /** Lissie's tools, keyed by the names the model and the chat see. */
 export const todoTools = {
   listTodos: listTodosTool,
   addTodo: addTodoTool,
   setTodoDone: setTodoDoneTool,
+  showProgress: showProgressTool,
 };

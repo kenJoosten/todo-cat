@@ -22,10 +22,12 @@
     "auth:generate": "auth generate --config scripts/auth-cli-config.mts --output lib/auth-schema.ts --yes && biome check --write lib/auth-schema.ts"
   },
   "dependencies": {
+    "@a2ui/web_core": "0.10.4",
     "@ag-ui/client": "1.0.1",
     "@ag-ui/core": "1.0.1",
     "@ag-ui/mastra": "1.1.6",
     "@better-auth/drizzle-adapter": "1.7.7",
+    "@copilotkit/a2ui-renderer": "1.77.0",
     "@copilotkit/react-core": "1.77.0",
     "@copilotkit/runtime": "1.77.0",
     "@libsql/client": "0.18.0",
@@ -43,6 +45,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@ag-ui/a2ui-toolkit": "0.0.4",
     "@biomejs/biome": "2.4.2",
     "@next/env": "16.3.8",
     "@playwright/test": "^1.63.0",

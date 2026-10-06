@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 // alone), never in QA or CI. Model replies vary, so it checks what Lissie did, not her words.
 test.setTimeout(120_000);
 
-test("ask Lissie to add buy milk, and find it in the sidebar", async ({
+test("ask Lissie to add buy milk, and find it on the list", async ({
   page,
 }) => {
   await page.goto("/signup");
@@ -16,7 +16,7 @@ test("ask Lissie to add buy milk, and find it in the sidebar", async ({
   await expect(page.getByRole("heading", { name: "Hi, Oona." })).toBeVisible();
 
   const open = page
-    .getByRole("complementary", { name: "Your list" })
+    .getByRole("region", { name: "Your list" })
     .getByRole("region", { name: /^Open/ });
   await expect(open.getByText("Nothing open.")).toBeVisible();
 
@@ -30,8 +30,10 @@ test("ask Lissie to add buy milk, and find it in the sidebar", async ({
   // The run's event stream ends when Lissie has finished her reply.
   await (await run).finished();
 
-  // The sidebar refreshes after her change, without a reload.
-  await expect(open.getByRole("listitem")).toHaveText([/^buy milk$/i]);
+  // The list refreshes after her change, without a reload.
+  await expect(
+    open.getByRole("checkbox", { name: /^buy milk$/i }),
+  ).toBeVisible();
   // Her tool call shows as one readable line, and she says something about it.
   await expect(page.getByText(/^Added “buy milk”$/i)).toBeVisible();
   await expect(page.getByTestId("copilot-assistant-message").last()).toHaveText(
@@ -40,6 +42,8 @@ test("ask Lissie to add buy milk, and find it in the sidebar", async ({
 
   // Both survive a reload: the list from the database, the line from Mastra memory.
   await page.reload();
-  await expect(open.getByRole("listitem")).toHaveText([/^buy milk$/i]);
+  await expect(
+    open.getByRole("checkbox", { name: /^buy milk$/i }),
+  ).toBeVisible();
   await expect(page.getByText(/^Added “buy milk”$/i)).toBeVisible();
 });

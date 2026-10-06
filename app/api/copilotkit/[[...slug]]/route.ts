@@ -4,6 +4,7 @@ import {
   CopilotRuntime,
   createCopilotRuntimeHandler,
 } from "@copilotkit/runtime/v2";
+import { currentLissieThreadId } from "@/lib/lissie/conversation";
 import { mastra } from "@/lib/lissie/mastra";
 import { lissieRequestContext } from "@/lib/lissie/request-context";
 import { LissieRunner } from "@/lib/lissie/runner";
@@ -18,14 +19,23 @@ const runtime = new CopilotRuntime({
     if (!userId)
       throw Response.json({ error: "Unauthorized" }, { status: 401 });
     return {
-      [lissieAgentId]: MastraAgent.getLocalAgent({
-        mastra,
+      [lissieAgentId]: new MastraAgent({
         agentId: lissieAgentId,
+        agent: mastra.getAgent(lissieAgentId),
         resourceId: userId,
-        requestContext: lissieRequestContext(userId),
+        requestContext: lissieRequestContext(
+          userId,
+          await currentLissieThreadId(userId),
+        ),
+        // The bridge would add a UI-generating tool when a run's forwarded props, which
+        // the browser sends, ask for one; Lissie's cards come only from her own tools.
+        a2ui: { injectA2UITool: false },
       }),
     };
   },
+  // The A2UI middleware turns `a2ui_operations` in a tool result into a card in the chat
+  // (lib/lissie/progress-card.ts). No generated surfaces: it injects no render tool.
+  a2ui: { agents: [lissieAgentId], injectA2UITool: false },
   runner: new LissieRunner(),
   // The runtime forwards `authorization` and `x-*` request headers to the agent, and the
   // Mastra bridge passes them on to the model call: a bearer token would reach OpenRouter.

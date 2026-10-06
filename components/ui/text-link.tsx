@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 export function TextLink(props: ComponentProps<typeof Link>) {
   return (
     <Link
-      className="font-semibold underline decoration-amber decoration-2 underline-offset-4 hover:decoration-ink"
+      className="font-semibold text-ink underline decoration-amber decoration-2 underline-offset-4 hover:decoration-ink"
       {...props}
     />
   );

@@ -36,7 +36,7 @@ const methodColors = {
   GET: "bg-line text-ink",
   POST: "bg-amber text-ink",
   PATCH: "bg-ink text-ground",
-  DELETE: "bg-danger text-white",
+  DELETE: "bg-danger text-ground",
 };
 
 type Sent = {
@@ -167,7 +167,7 @@ function ResponsePanel({
 }) {
   if (!sent) {
     return (
-      <div className="flex min-h-80 items-center justify-center rounded-lg bg-ink p-8 text-center text-ground/70">
+      <div className="flex min-h-80 items-center justify-center rounded-lg bg-night p-8 text-center text-on-night/70">
         <p className="max-w-60 text-pretty">
           Send a request and the answer lands here.
         </p>
@@ -178,24 +178,24 @@ function ResponsePanel({
   return (
     <div
       aria-live="polite"
-      className="flex flex-col gap-5 rounded-lg bg-ink p-6 text-ground sm:p-8"
+      className="flex flex-col gap-5 rounded-lg bg-night p-6 text-on-night sm:p-8"
     >
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <p
-          className={`font-display text-7xl leading-none font-bold tracking-tight ${success ? "text-amber" : "text-danger-light"}`}
+          className={`font-display text-7xl leading-none font-bold tracking-tight ${success ? "text-amber" : "text-danger-on-night"}`}
         >
           <span className="sr-only">Status </span>
           {sent.status}
         </p>
-        <p className="pb-1 text-right text-ground/70">
+        <p className="pb-1 text-right text-on-night/70">
           {statusTexts[sent.status] ?? ""} in {sent.milliseconds} ms
         </p>
       </div>
-      <p className="font-mono text-sm break-all text-ground/70">
+      <p className="font-mono text-sm break-all text-on-night/70">
         {sent.method} {sent.path}
       </p>
       <p
-        className={`rounded-md px-3 py-2 text-sm font-medium ${sent.check.ok ? "bg-ground/10 text-ground" : "bg-danger-light/20 text-ground"}`}
+        className={`rounded-md px-3 py-2 text-sm font-medium ${sent.check.ok ? "bg-on-night/10 text-on-night" : "bg-danger-on-night/20 text-on-night"}`}
       >
         {sent.check.ok ? "Matches the contract. " : "Breaks the contract. "}
         <span className="font-normal">{sent.check.message}.</span>
@@ -203,21 +203,21 @@ function ResponsePanel({
 
       {sent.todos.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-medium text-ground/70">
+          <h3 className="mb-2 text-sm font-medium text-on-night/70">
             Todos in this answer
           </h3>
-          <ul className="flex flex-col divide-y divide-ground/10 rounded-md bg-ground/5">
+          <ul className="flex flex-col divide-y divide-on-night/10 rounded-md bg-on-night/5">
             {sent.todos.map((todo) => (
               <li
                 key={todo.id}
                 className="flex items-center justify-between gap-3 px-3 py-2"
               >
                 <span
-                  className={`min-w-0 truncate ${todo.done ? "text-ground/50 line-through" : ""}`}
+                  className={`min-w-0 truncate ${todo.done ? "text-on-night/50 line-through" : ""}`}
                 >
                   {todo.title}
                   {todo.dueDate && (
-                    <span className="ml-2 text-sm text-ground/60">
+                    <span className="ml-2 text-sm text-on-night/60">
                       due {todo.dueDate}
                     </span>
                   )}
@@ -226,7 +226,7 @@ function ResponsePanel({
                   type="button"
                   onClick={() => onUseId(todo.id)}
                   aria-label={`Use the id of ${todo.title}`}
-                  className="shrink-0 rounded px-2 py-1 text-sm font-semibold text-amber hover:bg-ground/10 focus-visible:outline-2 focus-visible:outline-amber"
+                  className="shrink-0 rounded px-2 py-1 text-sm font-semibold text-amber hover:bg-on-night/10 focus-visible:outline-2 focus-visible:outline-amber"
                 >
                   Use id
                 </button>
@@ -237,20 +237,20 @@ function ResponsePanel({
       )}
 
       <div>
-        <h3 className="mb-2 text-sm font-medium text-ground/70">Body</h3>
+        <h3 className="mb-2 text-sm font-medium text-on-night/70">Body</h3>
         <pre className="max-h-[28rem] overflow-auto rounded-md bg-black/30 p-4 font-mono text-sm leading-relaxed">
           {sent.text ? prettyBody(sent.text) : "(empty)"}
         </pre>
       </div>
 
       <details>
-        <summary className="cursor-pointer text-sm font-medium text-ground/70 hover:text-ground">
+        <summary className="cursor-pointer text-sm font-medium text-on-night/70 hover:text-on-night">
           Response headers
         </summary>
         <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 font-mono text-xs">
           {sent.headers.map(([name, value]) => (
             <div key={name} className="contents">
-              <dt className="text-ground/60">{name}</dt>
+              <dt className="text-on-night/60">{name}</dt>
               <dd className="break-all">{value}</dd>
             </div>
           ))}

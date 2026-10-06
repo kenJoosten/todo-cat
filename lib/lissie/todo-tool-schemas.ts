@@ -39,8 +39,22 @@ export const setTodoDoneOutput = z.union([
   errorBodySchema,
 ]);
 
+export const showProgressInput = z.object({});
+/**
+ * The A2UI operations that draw the progress card (lib/lissie/progress-card.ts); the chat
+ * renders them, and the model reads the counts from the data model they set.
+ */
+export const showProgressOutput = z.object({
+  a2ui_operations: z.array(z.record(z.string(), z.unknown())).min(1),
+});
+
 /** The tools' names as the model and the chat see them. */
-export const todoToolNames = ["listTodos", "addTodo", "setTodoDone"] as const;
+export const todoToolNames = [
+  "listTodos",
+  "addTodo",
+  "setTodoDone",
+  "showProgress",
+] as const;
 export type TodoToolName = (typeof todoToolNames)[number];
 
 /** The tools that change the list, so the sidebar refreshes after their calls. */
