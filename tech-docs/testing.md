@@ -16,7 +16,7 @@ Vitest runs unit and integration tests; Playwright runs end-to-end tests in Chro
 
 - `npm test`: all Vitest tests once; `npm test -- <path>` runs one file.
 - `npm run test:e2e`: Playwright; it starts its own dev server, so nothing needs to be running; `npm run test:e2e -- e2e/<name>.spec.ts` runs one spec.
-- `npm run test:e2e:model`: only the Playwright specs that call the real model, with the key from `.env`.
+- `npm run test:e2e:model`: only the Playwright specs that call the real model, with the key from `.env`; `npm run test:e2e:model:tools` runs just the one for Lissie's tools.
 - `npx playwright install chromium`: one-time browser download on a new machine.
 
 ## QA script

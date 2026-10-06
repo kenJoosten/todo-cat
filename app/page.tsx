@@ -9,8 +9,10 @@ import { getUserId } from "@/lib/auth";
 import { user } from "@/lib/auth-schema";
 import { db } from "@/lib/db";
 import { lissieThreadId } from "@/lib/lissie/thread";
+import { listTodos } from "@/lib/todo-service";
 import { signOut } from "./auth-actions";
 import { LissieChat } from "./lissie-chat";
+import { TodoSidebar } from "./todo-sidebar";
 
 export default async function Home() {
   const userId = await getUserId(await headers());
@@ -20,9 +22,10 @@ export default async function Home() {
     .from(user)
     .where(eq(user.id, userId));
   if (!me) redirect("/login");
+  const todos = await listTodos(userId, { status: "all" });
 
   return (
-    <PageShell>
+    <PageShell wide>
       <PageTitle lead="Lissie keeps your list. She'll talk about it, and nothing else.">
         Hi, {me.name}.
       </PageTitle>
@@ -31,7 +34,10 @@ export default async function Home() {
           <SubmitButton variant="secondary">Sign out</SubmitButton>
         </div>
       </Form>
-      <LissieChat threadId={lissieThreadId(userId)} />
+      <div className="mt-10 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <LissieChat threadId={lissieThreadId(userId)} />
+        <TodoSidebar todos={todos} />
+      </div>
     </PageShell>
   );
 }

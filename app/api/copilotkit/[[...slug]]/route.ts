@@ -4,33 +4,25 @@ import {
   CopilotRuntime,
   createCopilotRuntimeHandler,
 } from "@copilotkit/runtime/v2";
-import {
-  MASTRA_RESOURCE_ID_KEY,
-  MASTRA_THREAD_ID_KEY,
-  RequestContext,
-} from "@mastra/core/request-context";
 import { mastra } from "@/lib/lissie/mastra";
+import { lissieRequestContext } from "@/lib/lissie/request-context";
 import { LissieRunner } from "@/lib/lissie/runner";
-import { lissieThreadId } from "@/lib/lissie/thread";
 import { guard, lissieAgentId, requestUserId } from "./guard";
 
 const runtime = new CopilotRuntime({
-  // Built per request, so memory is scoped to the user from the server-side session.
-  // The reserved request-context keys make Mastra itself use that resource and thread,
+  // Built per request, so memory and tools are scoped to the user from the server-side
+  // session: the request context carries that user to Mastra's memory and to every tool,
   // whatever the browser sends.
   agents: async ({ request }) => {
     const userId = await requestUserId(request);
     if (!userId)
       throw Response.json({ error: "Unauthorized" }, { status: 401 });
-    const requestContext = new RequestContext();
-    requestContext.set(MASTRA_RESOURCE_ID_KEY, userId);
-    requestContext.set(MASTRA_THREAD_ID_KEY, lissieThreadId(userId));
     return {
       [lissieAgentId]: MastraAgent.getLocalAgent({
         mastra,
         agentId: lissieAgentId,
         resourceId: userId,
-        requestContext,
+        requestContext: lissieRequestContext(userId),
       }),
     };
   },

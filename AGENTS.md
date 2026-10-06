@@ -11,7 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # todo-cat
 
 todo-cat is a to-do list web app kept by Lissie, a cat with attitude.
-Lissie is an AI agent who chats with the user on `/`; she has no tools yet.
+Lissie is an AI agent who chats with the user on `/` and lists, adds and completes their todos with her tools.
 
 ## Stack and layout
 
@@ -30,6 +30,7 @@ Every script is in `package.json`; these are the ones whose behavior the name do
 
 - `npm run qa`: every check (Biome with warnings as errors, typecheck, production build, CLI build, Vitest, Playwright); CI runs the same script.
 - `npm run test:e2e:model`: the Playwright specs that call the real model (`*.model.spec.ts`); needs `OPENROUTER_API_KEY` in `.env`, and never runs in QA or CI.
+- `npm run test:e2e:model:tools`: only the model spec for Lissie's tools (asks her to add "buy milk", then checks the sidebar).
 - `npm run dev`: the dev server on port 3000; the Playwright and CLI tests start their own servers, so they don't need it.
 - `npm run db:seed`: migrate and (re)create the demo user `demo@todo-cat.dev` / `cat-person-2026` with demo todos.
 - `npx biome check --write <files>`: fix formatting and import order (`npm run format` only formats); name your files, because other sessions' uncommitted work may be in the tree.
@@ -73,7 +74,7 @@ Index:
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
 - [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, getting a bearer token with curl, and the `/api-tester` page.
 - [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
-- [agent.md](tech-docs/agent.md): Lissie's Mastra agent, memory, the CopilotKit runtime and its route guard, and the chat on `/`.
+- [agent.md](tech-docs/agent.md): Lissie's Mastra agent, her todo tools and how they get the user id, memory, the CopilotKit runtime and its route guard, and the chat and sidebar on `/`.
 - [cli.md](tech-docs/cli.md): the `todo-cat` CLI, its output and exit code rules, device login and token storage, the `/device` page, and its end-to-end test.
 
 ## Maintenance

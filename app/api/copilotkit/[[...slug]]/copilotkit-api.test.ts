@@ -9,9 +9,11 @@ import { afterAll, describe, expect, test, vi } from "vitest";
 
 // A scripted model instead of OpenRouter: it replies with `reply`, waits for `hold` first
 // when one is set, and records every call so tests can check what reached the model.
+// With `toolCall` set, it first calls that tool, and replies once the result is back.
 const model = vi.hoisted(() => ({
   reply: "Noted. Now let me sleep.",
   hold: undefined as Promise<void> | undefined,
+  toolCall: undefined as { toolName: string; input: unknown } | undefined,
   calls: [] as Parameters<MockLanguageModelV3["doStream"]>[0][],
 }));
 
@@ -24,16 +26,34 @@ vi.mock("@/lib/lissie/model", async () => {
         doStream: async (options) => {
           model.calls.push(options);
           await model.hold;
+          const { toolCall } = model;
+          const callTool = toolCall && options.prompt.at(-1)?.role !== "tool";
+          const finish = callTool ? "tool-calls" : "stop";
           return {
             stream: simulateReadableStream({
               chunks: [
                 { type: "stream-start", warnings: [] },
-                { type: "text-start", id: "t" },
-                { type: "text-delta", id: "t", delta: model.reply },
-                { type: "text-end", id: "t" },
+                ...(callTool
+                  ? [
+                      {
+                        type: "tool-call" as const,
+                        toolCallId: `call-${model.calls.length}`,
+                        toolName: toolCall.toolName,
+                        input: JSON.stringify(toolCall.input),
+                      },
+                    ]
+                  : [
+                      { type: "text-start" as const, id: "t" },
+                      {
+                        type: "text-delta" as const,
+                        id: "t",
+                        delta: model.reply,
+                      },
+                      { type: "text-end" as const, id: "t" },
+                    ]),
                 {
                   type: "finish",
-                  finishReason: { unified: "stop", raw: "stop" },
+                  finishReason: { unified: finish, raw: finish },
                   usage: {
                     inputTokens: {
                       total: 1,
@@ -61,6 +81,7 @@ const authRoute = await import("../../auth/[...all]/route");
 const route = await import("./route");
 const { lissieHistory } = await import("@/lib/lissie/history");
 const { lissieThreadId } = await import("@/lib/lissie/thread");
+const { addTodo, getTodo, listTodos } = await import("@/lib/todo-service");
 await migrate(db, { migrationsFolder: "drizzle" });
 
 afterAll(() => {
@@ -168,6 +189,7 @@ function everyRoute(thread: string): [Method, string][] {
 
 const alice = await signUp("Alice");
 const bob = await signUp("Bob");
+const carol = await signUp("Carol");
 
 describe("without a valid user, every route answers 401", () => {
   for (const [method, path] of everyRoute(alice.thread)) {
@@ -281,6 +303,123 @@ describe("a signed-in user", () => {
     expect(
       (await lissieHistory(alice.thread)).map((m) => m.content),
     ).not.toContain("Add laundry.");
+  });
+});
+
+describe("Lissie's tools act for the signed-in user", () => {
+  afterAll(() => {
+    model.toolCall = undefined;
+  });
+
+  /** Runs Lissie as Carol, with the model calling `toolName` once, and returns the events. */
+  async function runTool(toolName: string, input: unknown, text: string) {
+    model.toolCall = { toolName, input };
+    const response = await call("POST", "/agent/lissie/run", {
+      token: carol.token,
+      body: runInput(carol.thread, text),
+    });
+    expect(response.status).toBe(200);
+    // The run streams, so the model is only called while the events are read.
+    const runEvents = await events(response);
+    model.toolCall = undefined;
+    return runEvents;
+  }
+
+  test("addTodo adds to their own list, whatever user id the model sends", async () => {
+    const input = { title: "Buy milk", dueDate: null, userId: bob.id };
+    const types = (await runTool("addTodo", input, "Add buy milk.")).map(
+      (event) => event.type,
+    );
+    expect(types).toContain("TOOL_CALL_START");
+    expect(types).toContain("TOOL_CALL_RESULT");
+    expect(types.at(-1)).toBe("RUN_FINISHED");
+    const carols = await listTodos(carol.id, { status: "all" });
+    expect(carols.map((todo) => todo.title)).toEqual(["Buy milk"]);
+    expect(await listTodos(bob.id, { status: "all" })).toEqual([]);
+  });
+
+  test("setTodoDone can't reach another user's todo", async () => {
+    const bobs = await addTodo(bob.id, {
+      title: "Bob's secret",
+      dueDate: null,
+    });
+    const result = (
+      await runTool("setTodoDone", { id: bobs.id, done: true }, "Done!")
+    ).find((event) => event.type === "TOOL_CALL_RESULT") as
+      | { content: string }
+      | undefined;
+    expect(JSON.parse(result?.content ?? "null")).toMatchObject({
+      error: { code: "todo-not-found" },
+    });
+    expect(await getTodo(bob.id, bobs.id)).toEqual(bobs);
+  });
+
+  test("the tool calls come back after a restart, and resending them stores nothing twice", async () => {
+    new InMemoryAgentRunner().clearThreads();
+    vi.resetModules();
+    const restarted = await import("./route");
+    const response = await restarted.POST(
+      new Request(`${base}/agent/lissie/connect`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${carol.token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(runInput(carol.thread, "")),
+      }),
+    );
+    const snapshot = (await events(response)).find(
+      (event) => event.type === "MESSAGES_SNAPSHOT",
+    ) as { messages: Message[] } | undefined;
+    const messages = snapshot?.messages ?? [];
+    const toolCalls = messages.flatMap((message) =>
+      message.role === "assistant" ? (message.toolCalls ?? []) : [],
+    );
+    expect(toolCalls.map((toolCall) => toolCall.function.name)).toEqual([
+      "addTodo",
+      "setTodoDone",
+    ]);
+    const results = messages.flatMap((message) =>
+      message.role === "tool" ? [JSON.parse(String(message.content))] : [],
+    );
+    expect(results).toMatchObject([
+      { todo: { title: "Buy milk", done: false } },
+      { error: { code: "todo-not-found" } },
+    ]);
+    expect(messages.map((message) => message.role)).toEqual([
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+    ]);
+
+    // The browser sends the whole conversation with its next message.
+    const next = runInput(carol.thread, "Thanks.");
+    const resent = await restarted.POST(
+      new Request(`${base}/agent/lissie/run`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${carol.token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          ...next,
+          messages: [...messages, ...next.messages],
+        }),
+      }),
+    );
+    expect(resent.status).toBe(200);
+    await resent.text();
+    const history = await lissieHistory(carol.thread);
+    expect(history.map((message) => message.id)).toEqual([
+      ...messages.map((message) => message.id),
+      next.messages[0].id,
+      expect.any(String),
+    ]);
   });
 });
 

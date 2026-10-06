@@ -21,8 +21,27 @@ async function signUp(page: Page, name: string) {
   return email;
 }
 
-/** Writes a past conversation into the e2e server's Mastra memory, as a run would. */
-async function rememberConversation(email: string, texts: [string, string]) {
+type Part =
+  | { type: "text"; text: string }
+  | {
+      type: "tool-invocation";
+      toolInvocation: {
+        state: "result";
+        toolCallId: string;
+        toolName: string;
+        args: unknown;
+        result: unknown;
+      };
+    };
+
+/**
+ * Writes a past conversation into the e2e server's Mastra memory, as a run would: the
+ * user's text, then Lissie's message as parts (text, or the tool calls she made).
+ */
+async function rememberConversation(
+  email: string,
+  [question, answer]: [string, string | Part[]],
+) {
   const client = createClient({ url: String(process.env.E2E_DATABASE_URL) });
   try {
     const { rows } = await client.execute({
@@ -44,14 +63,18 @@ async function rememberConversation(email: string, texts: [string, string]) {
         updatedAt: new Date(now),
       },
     });
+    const parts: Part[][] = [
+      [{ type: "text", text: question }],
+      typeof answer === "string" ? [{ type: "text", text: answer }] : answer,
+    ];
     await memory.saveMessages({
-      messages: texts.map((text, index) => ({
+      messages: parts.map((messageParts, index) => ({
         id: `remembered-${now}-${index}`,
         role: index === 0 ? "user" : "assistant",
         createdAt: new Date(now + index),
         threadId,
         resourceId,
-        content: { format: 2, parts: [{ type: "text", text }] },
+        content: { format: 2, parts: messageParts },
       })),
     });
   } finally {
@@ -96,4 +119,61 @@ test("the chat shows the conversation kept in Mastra memory", async ({
   await page.reload();
   await expect(page.getByText(question)).toBeVisible();
   await expect(page.getByText(answer)).toBeVisible();
+});
+
+test("the sidebar shows the user's own open and done todos", async ({
+  page,
+}) => {
+  await signUp(page, "Ines");
+  const sidebar = page.getByRole("complementary", { name: "Your list" });
+  await expect(sidebar.getByText("Nothing open.")).toBeVisible();
+
+  // The REST API, with the page's session cookie: Lissie is the chat's only write path.
+  const add = (title: string, dueDate: string | null = null) =>
+    page.request.post("/api/todos", { data: { title, dueDate } });
+  await add("Buy tuna", "2026-10-09");
+  const fed = await (await add("Feed the cat")).json();
+  await page.request.patch(`/api/todos/${fed.id}`, { data: { done: true } });
+
+  await page.reload();
+  const open = sidebar.getByRole("region", { name: /^Open/ });
+  const done = sidebar.getByRole("region", { name: /^Done/ });
+  await expect(open.getByRole("listitem")).toHaveText(["Buy tuna9 Oct"]);
+  await expect(done.getByRole("listitem")).toHaveText(["Feed the cat"]);
+});
+
+test("the replayed chat shows Lissie's tool calls as readable lines", async ({
+  page,
+}) => {
+  const email = await signUp(page, "Jun");
+  const todo = {
+    id: "t1",
+    title: "Buy milk",
+    dueDate: null,
+    done: false,
+    createdAt: new Date().toISOString(),
+    completedAt: null,
+  };
+  const reply = "Milk. For you, presumably. Noted.";
+  await rememberConversation(email, [
+    "Add buy milk.",
+    [
+      {
+        type: "tool-invocation",
+        toolInvocation: {
+          state: "result",
+          toolCallId: "call-1",
+          toolName: "addTodo",
+          args: { title: "Buy milk", dueDate: null },
+          result: { todo },
+        },
+      },
+      { type: "text", text: reply },
+    ],
+  ]);
+
+  await page.reload();
+  await expect(page.getByText("Added “Buy milk”")).toBeVisible();
+  await expect(page.getByText(reply)).toBeVisible();
+  await expect(page.getByText('"todo"')).toHaveCount(0);
 });
