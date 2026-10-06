@@ -12,6 +12,7 @@ const { db } = await import("../db");
 const { todos, user } = await import("../schema");
 const { addTodo, getTodo, listTodos } = await import("../todo-service");
 const { lissieRequestContext } = await import("./request-context");
+const { lissieThreadId } = await import("./thread");
 
 const { todoTools } = await import("./todo-tools");
 const { addTodoOutput, listTodosOutput, setTodoDoneOutput } = await import(
@@ -50,7 +51,7 @@ function toolContext(requestContext?: RequestContext): ToolContext {
 // Every tool runs with two users: Alice is signed in, Bob's todos must stay out of reach.
 const alice = "user-alice";
 const bob = "user-bob";
-const asAlice = toolContext(lissieRequestContext(alice));
+const asAlice = toolContext(lissieRequestContext(alice, lissieThreadId(alice)));
 
 beforeEach(async () => {
   await db.delete(todos);

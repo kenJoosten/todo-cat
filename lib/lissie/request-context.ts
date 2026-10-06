@@ -4,7 +4,6 @@ import {
   MASTRA_THREAD_ID_KEY,
   RequestContext,
 } from "@mastra/core/request-context";
-import { lissieThreadId } from "./thread";
 
 /**
  * The request-context key Lissie's tools read the signed-in user's id from. Only the
@@ -14,14 +13,18 @@ import { lissieThreadId } from "./thread";
 export const userIdKey = "todo-cat.user-id";
 
 /**
- * The context for one run of Lissie on behalf of `userId`, who comes from `getUserId`.
- * Mastra prefers its reserved resource and thread keys over anything in the run input,
- * so memory is that user's; the tools take the owner of every todo from `userIdKey`.
+ * The context for one run of Lissie on behalf of `userId`, who comes from `getUserId`, in
+ * their current thread. Mastra prefers its reserved resource and thread keys over anything
+ * in the run input, so memory is that user's; the tools take the owner of every todo from
+ * `userIdKey`.
  */
-export function lissieRequestContext(userId: string): RequestContext {
+export function lissieRequestContext(
+  userId: string,
+  threadId: string,
+): RequestContext {
   const requestContext = new RequestContext();
   requestContext.set(MASTRA_RESOURCE_ID_KEY, userId);
-  requestContext.set(MASTRA_THREAD_ID_KEY, lissieThreadId(userId));
+  requestContext.set(MASTRA_THREAD_ID_KEY, threadId);
   requestContext.set(userIdKey, userId);
   return requestContext;
 }

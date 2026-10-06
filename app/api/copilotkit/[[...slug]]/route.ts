@@ -4,6 +4,7 @@ import {
   CopilotRuntime,
   createCopilotRuntimeHandler,
 } from "@copilotkit/runtime/v2";
+import { currentLissieThreadId } from "@/lib/lissie/conversation";
 import { mastra } from "@/lib/lissie/mastra";
 import { lissieRequestContext } from "@/lib/lissie/request-context";
 import { LissieRunner } from "@/lib/lissie/runner";
@@ -22,7 +23,10 @@ const runtime = new CopilotRuntime({
         mastra,
         agentId: lissieAgentId,
         resourceId: userId,
-        requestContext: lissieRequestContext(userId),
+        requestContext: lissieRequestContext(
+          userId,
+          await currentLissieThreadId(userId),
+        ),
       }),
     };
   },

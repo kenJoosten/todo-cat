@@ -3,8 +3,8 @@
 // thread id they are given. So this guard decides, per route, before the runtime runs.
 import type { CopilotRuntimeHooks } from "@copilotkit/runtime/v2";
 import { getUserId } from "@/lib/auth";
+import { currentLissieThreadId } from "@/lib/lissie/conversation";
 import { inspectorEnabled } from "@/lib/lissie/inspector";
-import { lissieThreadId } from "@/lib/lissie/thread";
 
 export const lissieAgentId = "lissie";
 
@@ -42,12 +42,12 @@ export const guard: CopilotRuntimeHooks = {
   onRequest: async ({ request }) => {
     if (!(await requestUserId(request))) reject(401);
   },
-  // An allowlist: a user reaches Lissie and only their own thread; everything else is
-  // "not found", so the answer never reveals whether another user's thread exists.
+  // An allowlist: a user reaches Lissie and only their own current thread; everything else
+  // is "not found", so the answer never reveals whether another user's thread exists.
   onBeforeHandler: async ({ request, route }) => {
     const userId = await requestUserId(request);
     if (!userId) reject(401);
-    const ownThread = lissieThreadId(userId);
+    const ownThread = await currentLissieThreadId(userId);
     switch (route.method) {
       case "info":
         return;

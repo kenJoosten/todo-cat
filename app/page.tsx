@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { getUserId } from "@/lib/auth";
 import { user } from "@/lib/auth-schema";
 import { db } from "@/lib/db";
-import { lissieThreadId } from "@/lib/lissie/thread";
+import { currentLissieThreadId } from "@/lib/lissie/conversation";
 import { listTodos } from "@/lib/todo-service";
 import { signOut } from "./auth-actions";
 import { LissieChat } from "./lissie-chat";
@@ -51,12 +51,14 @@ export default async function Home() {
         </div>
         <section
           aria-labelledby="lissie-heading"
-          className="flex flex-col gap-4 lg:sticky lg:top-6"
+          className="lg:sticky lg:top-6"
         >
-          <SectionHeading id="lissie-heading">Lissie</SectionHeading>
-          <div className="h-[34rem] lg:h-[calc(100dvh-9rem)] lg:max-h-[48rem]">
-            <LissieChat threadId={lissieThreadId(userId)} />
-          </div>
+          <LissieChat
+            threadId={await currentLissieThreadId(userId)}
+            heading={
+              <SectionHeading id="lissie-heading">Lissie</SectionHeading>
+            }
+          />
         </section>
       </div>
     </PageShell>

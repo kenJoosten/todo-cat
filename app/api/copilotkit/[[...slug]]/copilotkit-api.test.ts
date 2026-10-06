@@ -79,6 +79,9 @@ vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
 const { db } = await import("@/lib/db");
 const authRoute = await import("../../auth/[...all]/route");
 const route = await import("./route");
+const { clearLissieConversation, currentLissieThreadId } = await import(
+  "@/lib/lissie/conversation"
+);
 const { lissieHistory } = await import("@/lib/lissie/history");
 const { lissieThreadId } = await import("@/lib/lissie/thread");
 const { addTodo, getTodo, listTodos } = await import("@/lib/todo-service");
@@ -190,6 +193,7 @@ function everyRoute(thread: string): [Method, string][] {
 const alice = await signUp("Alice");
 const bob = await signUp("Bob");
 const carol = await signUp("Carol");
+const dana = await signUp("Dana");
 
 describe("without a valid user, every route answers 401", () => {
   for (const [method, path] of everyRoute(alice.thread)) {
@@ -508,5 +512,62 @@ describe("a run that does not name the caller's own thread is not found", () => 
       body: runInput(alice.thread, "Hi"),
     });
     expect(response.status).toBe(404);
+  });
+});
+
+describe("clearing the chat", () => {
+  async function run(threadId: string, text: string) {
+    const response = await call("POST", "/agent/lissie/run", {
+      token: dana.token,
+      body: runInput(threadId, text),
+    });
+    if (response.ok) await response.text();
+    return response.status;
+  }
+
+  test("starts a new, empty thread and forgets the old one", async () => {
+    expect(await run(dana.thread, "Remind me to call the vet.")).toBe(200);
+    expect(await lissieHistory(dana.thread)).toHaveLength(2);
+
+    await clearLissieConversation(dana.id);
+    const fresh = await currentLissieThreadId(dana.id);
+    expect(fresh).not.toBe(dana.thread);
+    expect(await lissieHistory(dana.thread)).toEqual([]);
+    expect(await lissieHistory(fresh)).toEqual([]);
+
+    expect(await run(fresh, "Add brush the cat.")).toBe(200);
+    expect((await lissieHistory(fresh)).map((m) => m.content)).toEqual([
+      "Add brush the cat.",
+      model.reply,
+    ]);
+  });
+
+  test("leaves the old thread unreachable", async () => {
+    const before = model.calls.length;
+    expect(await run(dana.thread, "Hi again.")).toBe(404);
+    expect(model.calls.length).toBe(before);
+    const connect = await call("POST", "/agent/lissie/connect", {
+      token: dana.token,
+      body: runInput(dana.thread, ""),
+    });
+    expect(connect.status).toBe(404);
+    const messages = await call("GET", `/threads/${dana.thread}/messages`, {
+      token: dana.token,
+    });
+    expect(messages.status).toBe(404);
+  });
+
+  test("keeps the new thread the user's own", async () => {
+    const fresh = await currentLissieThreadId(dana.id);
+    const response = await call("POST", "/agent/lissie/run", {
+      token: alice.token,
+      body: runInput(fresh, "Read me Dana's chat."),
+    });
+    expect(response.status).toBe(404);
+  });
+
+  test("touches no one else's conversation", async () => {
+    expect(await currentLissieThreadId(alice.id)).toBe(alice.thread);
+    expect(await lissieHistory(alice.thread)).not.toEqual([]);
   });
 });

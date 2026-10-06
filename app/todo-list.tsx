@@ -2,7 +2,6 @@
 
 import type { Todo } from "@todo-cat/contract";
 import {
-  type KeyboardEvent,
   type ReactNode,
   useEffect,
   useId,
@@ -15,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ClawMarks } from "@/components/ui/claw-marks";
+import { Confirm } from "@/components/ui/confirm";
 import { Field } from "@/components/ui/field";
 import { FormError } from "@/components/ui/form-error";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -111,22 +111,15 @@ function TodoRow({
   const [swipe] = useState(live);
   const [confirming, setConfirming] = useState(false);
   const deleteRef = useRef<HTMLButtonElement>(null);
-  const keepRef = useRef<HTMLButtonElement>(null);
   const asked = useRef(false);
   const checkboxId = useId();
   const pending = todo.id.startsWith(pendingPrefix);
 
-  // The safe choice takes focus when the question appears, and the delete button gets it
-  // back when the question goes away.
+  // The delete button gets focus back when the question goes away.
   useEffect(() => {
-    if (confirming) keepRef.current?.focus();
-    else if (asked.current) deleteRef.current?.focus();
+    if (!confirming && asked.current) deleteRef.current?.focus();
     asked.current = confirming;
   }, [confirming]);
-
-  const escapeKeeps = (event: KeyboardEvent) => {
-    if (event.key === "Escape") setConfirming(false);
-  };
 
   return (
     <li className="flex min-h-14 items-center gap-3 border-b border-line py-2">
@@ -146,26 +139,12 @@ function TodoRow({
         </span>
       </label>
       {confirming ? (
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="text-sm text-muted">Delete it?</span>
-          <Button
-            variant="danger"
-            size="small"
-            onClick={onDelete}
-            onKeyDown={escapeKeeps}
-          >
-            Delete
-          </Button>
-          <Button
-            ref={keepRef}
-            variant="secondary"
-            size="small"
-            onClick={() => setConfirming(false)}
-            onKeyDown={escapeKeeps}
-          >
-            Keep
-          </Button>
-        </div>
+        <Confirm
+          question="Delete it?"
+          action="Delete"
+          onConfirm={onDelete}
+          onKeep={() => setConfirming(false)}
+        />
       ) : (
         <>
           {todo.dueDate && (

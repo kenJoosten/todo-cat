@@ -16,7 +16,7 @@ todo-cat has one visual direction, "Blue hour on the windowsill": Lissie watches
 - Tokens: `app/globals.css`, one `@theme` block (light) and a `prefers-color-scheme: dark` block that redefines the same variables; components use the utilities (`bg-ground`, `text-ink`, `bg-surface`, ...) and never raw colors, so both modes follow from those two blocks.
 - `on-amber` is the text color on amber in both modes; `night` and `on-night` are for a panel that stays dark in both modes (the API tester's response).
 - Fonts: `app/layout.tsx` loads them with `next/font/google` as CSS variables, which `@theme inline` maps to `font-display`, `font-sans` and `font-mono`. Imbue's optical size follows the font size by itself (`font-optical-sizing: auto`), so don't set `opsz`.
-- Shared components: `components/ui/`, including the page shell (wordmark and header actions), titles, section headings, buttons (`primary`, `secondary`, `danger`, `quiet`), fields, the checkbox and the claw marks. Pages compose them instead of repeating class strings.
+- Shared components: `components/ui/`, including the page shell (wordmark and header actions), titles, section headings, buttons (`primary`, `secondary`, `danger`, `quiet`), the inline confirm step before something that can't be undone (deleting a todo, clearing the chat), fields, the checkbox and the claw marks. Pages compose them instead of repeating class strings.
 - The list on `/`: `app/todo-list.tsx`, with its Server Actions in `app/todo-actions.ts` (see [architecture.md](architecture.md)).
 - The chat's theme: `app/lissie-chat.css`.
 - Dark mode follows the system setting; there is no toggle.

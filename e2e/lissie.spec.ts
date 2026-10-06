@@ -179,3 +179,38 @@ test("the replayed chat shows Lissie's tool calls as readable lines", async ({
   await expect(page.getByText(reply)).toBeVisible();
   await expect(page.getByText('"todo"')).toHaveCount(0);
 });
+
+test("clearing the chat empties it, and Lissie forgets it after a reload", async ({
+  page,
+}) => {
+  const email = await signUp(page, "Noor");
+  const question = "Can the vacuuming wait until Saturday?";
+  const answer = "It can. I would prefer it waited forever.";
+  await rememberConversation(email, [question, answer]);
+  await page.reload();
+  await expect(page.getByText(answer)).toBeVisible();
+
+  const clear = page.getByRole("button", { name: "Clear chat" });
+  await clear.click();
+  await expect(page.getByText("Lissie forgets it too.")).toBeVisible();
+  await page.getByRole("button", { name: "Keep" }).click();
+  await expect(clear).toBeFocused();
+  await expect(page.getByText(answer)).toBeVisible();
+
+  await clear.click();
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await expect(page.getByText(answer)).toHaveCount(0);
+  await expect(page.getByText(question)).toHaveCount(0);
+  await expect(clear).toBeDisabled();
+  await expect(
+    page.getByPlaceholder("Tell Lissie about your list"),
+  ).toBeFocused();
+
+  await page.reload();
+  await expect(
+    page.getByPlaceholder("Tell Lissie about your list"),
+  ).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByText(question)).toHaveCount(0);
+  await expect(clear).toBeDisabled();
+});
