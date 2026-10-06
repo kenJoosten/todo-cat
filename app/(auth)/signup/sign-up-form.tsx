@@ -33,6 +33,7 @@ export function SignUpForm({ next }: { next?: string }) {
           name="password"
           type="password"
           autoComplete="new-password"
+          hint="At least 8 characters."
           minLength={8}
           maxLength={128}
           required

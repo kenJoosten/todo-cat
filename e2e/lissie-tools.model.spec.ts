@@ -13,12 +13,14 @@ test("ask Lissie to add buy milk, and find it on the list", async ({
   await page.getByLabel("Email").fill(`oona-${Date.now()}@example.com`);
   await page.getByLabel("Password").fill("tuna-o-clock");
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Hi, Oona." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Back to it, Oona." }),
+  ).toBeVisible();
 
   const open = page
     .getByRole("region", { name: "Your list" })
     .getByRole("region", { name: /^Open/ });
-  await expect(open.getByText("Nothing open.")).toBeVisible();
+  await expect(open.getByText("An empty list.")).toBeVisible();
 
   await page
     .getByPlaceholder("Tell Lissie about your list")

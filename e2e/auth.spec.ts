@@ -14,7 +14,7 @@ test("sign up, sign out, and sign in again", async ({ page }) => {
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(
-    page.getByRole("heading", { name: "Hi, Lissie." }),
+    page.getByRole("heading", { name: "Back to it, Lissie." }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Sign out" }).click();
@@ -35,6 +35,6 @@ test("sign up, sign out, and sign in again", async ({ page }) => {
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(
-    page.getByRole("heading", { name: "Hi, Lissie." }),
+    page.getByRole("heading", { name: "Back to it, Lissie." }),
   ).toBeVisible();
 });

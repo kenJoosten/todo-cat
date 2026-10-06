@@ -3,6 +3,7 @@
 import type { Todo } from "@todo-cat/contract";
 import {
   type ReactNode,
+  type RefObject,
   useEffect,
   useId,
   useOptimistic,
@@ -20,6 +21,7 @@ import { FormError } from "@/components/ui/form-error";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { dueDateLabel } from "@/lib/due-date";
+import { compareInSection } from "@/lib/todo-order";
 import {
   addTodoAction,
   deleteTodoAction,
@@ -30,6 +32,8 @@ import {
 // The user's list on /: add, check off, reopen and delete, through the Server Actions in
 // ./todo-actions.ts. `todos` comes from the server; a change shows at once (optimistically)
 // and the action's refresh then renders the service's state, as does a change Lissie makes.
+// A row checked off or reopened stays where it is while its claw marks draw or lift, then
+// moves to its section; focus moves to the row next to it, never to the page.
 
 type Change =
   | { type: "add"; todo: Todo }
@@ -58,6 +62,36 @@ function applyChange(todos: Todo[], change: Change): Todo[] {
 /** A todo added here that the server hasn't confirmed yet. */
 const pendingPrefix = "pending-";
 
+/**
+ * How long a row whose done state changed stays put before it moves to its section: the
+ * claw marks take about a third of a second to draw, then a beat to see them.
+ */
+const settleMs = 900;
+
+/**
+ * Before `row` leaves its list, moves focus from inside it to the same control in the row
+ * after it (or before it), or to the section when it was the only row.
+ */
+function handOffFocus(row: Element | null) {
+  const focused = document.activeElement;
+  if (!row || !focused || !row.contains(focused)) return;
+  // Focus inside the row but on no control is on its delete question.
+  const control =
+    focused.closest<HTMLElement>("[data-row-control]")?.dataset.rowControl ??
+    "delete";
+  const selector = `[data-row-control="${control}"]`;
+  const next = [row.nextElementSibling, row.previousElementSibling]
+    .map((sibling) => sibling?.querySelector<HTMLElement>(selector))
+    .find(Boolean);
+  (next ?? row.closest<HTMLElement>("section"))?.focus();
+}
+
+function rowElement(list: RefObject<HTMLElement | null>, id: string) {
+  return (
+    list.current?.querySelector(`[data-todo-row="${CSS.escape(id)}"]`) ?? null
+  );
+}
+
 const noSubscription = () => () => {};
 
 /** Today in the browser's time zone as yyyy-mm-dd; null while rendering on the server. */
@@ -73,23 +107,30 @@ function useToday() {
   );
 }
 
+// Beside the title from `sm` up; under it on phones, where the title needs the width.
+const dueDatePlacement = {
+  beside: "mt-3 hidden shrink-0 sm:block",
+  below: "mt-0.5 block sm:hidden",
+};
+
 function DueDate({
   date,
   today,
   done,
+  placement,
 }: {
   date: string;
   today: string | null;
   done: boolean;
+  placement: keyof typeof dueDatePlacement;
 }) {
   const overdue = !done && today !== null && date < today;
   const label = date === today ? "Today" : dueDateLabel(date);
   return (
     <span
-      className={`shrink-0 text-sm tabular-nums ${overdue ? "font-semibold text-danger" : date === today ? "font-semibold text-ink" : "text-muted"}`}
+      className={`${dueDatePlacement[placement]} text-sm tabular-nums ${overdue ? "font-semibold text-danger" : date === today ? "font-semibold text-ink" : "text-muted"}`}
     >
-      {label}
-      {overdue && <span className="sr-only">, overdue</span>}
+      {overdue ? `Overdue · ${label}` : label}
     </span>
   );
 }
@@ -97,23 +138,27 @@ function DueDate({
 function TodoRow({
   todo,
   today,
-  live,
   onDone,
   onDelete,
 }: {
   todo: Todo;
   today: string | null;
-  /** Rows that appear after the list first rendered swipe their claw marks in. */
-  live: boolean;
   onDone: (done: boolean) => void;
   onDelete: () => void;
 }) {
-  const [swipe] = useState(live);
+  // The claw marks swipe in only when the todo is checked off while the row is on screen,
+  // by the user or by Lissie; a row that arrives done shows them still.
+  const [wasDone, setWasDone] = useState(todo.done);
+  const [swipe, setSwipe] = useState(false);
+  if (todo.done !== wasDone) {
+    setWasDone(todo.done);
+    setSwipe(todo.done);
+  }
   const [confirming, setConfirming] = useState(false);
   const deleteRef = useRef<HTMLButtonElement>(null);
   const asked = useRef(false);
-  const checkboxId = useId();
   const pending = todo.id.startsWith(pendingPrefix);
+  const checkboxId = useId();
 
   // The delete button gets focus back when the question goes away.
   useEffect(() => {
@@ -121,55 +166,87 @@ function TodoRow({
     asked.current = confirming;
   }, [confirming]);
 
+  // The title and the checkbox share one label, so the whole line is the hit area; the
+  // row wraps the confirm question below the title when they don't fit side by side.
   return (
-    <li className="flex min-h-14 items-center gap-3 border-b border-line py-2">
-      <Checkbox
-        id={checkboxId}
-        checked={todo.done}
-        disabled={pending}
-        onChange={(event) => onDone(event.target.checked)}
-      />
+    <li
+      data-todo-row={todo.id}
+      className="flex flex-wrap items-start gap-x-3 border-b border-line py-1.5"
+    >
       <label
         htmlFor={checkboxId}
-        className={`min-w-0 flex-1 cursor-pointer text-pretty ${todo.done ? "text-muted" : ""}`}
+        className={`flex min-w-[min(10rem,100%)] flex-1 cursor-pointer items-start gap-3 py-2.5 ${todo.done ? "text-muted" : ""}`}
       >
-        <span className="relative inline-block">
-          {todo.title}
-          {todo.done && <ClawMarks swipe={swipe} />}
+        <span className="pt-0.5">
+          <Checkbox
+            id={checkboxId}
+            data-row-control="check"
+            checked={todo.done}
+            disabled={pending}
+            onChange={(event) => onDone(event.target.checked)}
+          />
+        </span>
+        <span className="min-w-0">
+          <span className="relative inline-block text-pretty">
+            {todo.title}
+            {todo.done && <ClawMarks swipe={swipe} />}
+          </span>
+          {todo.dueDate && !todo.done && (
+            <DueDate
+              date={todo.dueDate}
+              today={today}
+              done={todo.done}
+              placement="below"
+            />
+          )}
         </span>
       </label>
       {confirming ? (
-        <Confirm
-          question="Delete it?"
-          action="Delete"
-          onConfirm={onDelete}
-          onKeep={() => setConfirming(false)}
-        />
+        <div className="ml-auto flex min-h-11 items-center">
+          <Confirm
+            question={
+              <>
+                Delete it?<span className="sr-only"> {todo.title}</span>
+              </>
+            }
+            action="Delete"
+            onConfirm={onDelete}
+            onKeep={() => setConfirming(false)}
+          />
+        </div>
       ) : (
         <>
-          {todo.dueDate && (
-            <DueDate date={todo.dueDate} today={today} done={todo.done} />
+          {todo.dueDate && !todo.done && (
+            <DueDate
+              date={todo.dueDate}
+              today={today}
+              done={todo.done}
+              placement="beside"
+            />
           )}
-          <Button
-            ref={deleteRef}
-            variant="quiet"
-            size="icon"
-            aria-label={`Delete “${todo.title}”`}
-            disabled={pending}
-            onClick={() => setConfirming(true)}
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 20 20"
-              className="size-4 fill-none stroke-current stroke-[1.75]"
+          <span className="-mr-2.5">
+            <Button
+              ref={deleteRef}
+              data-row-control="delete"
+              variant="quiet"
+              size="icon"
+              aria-label={`Delete “${todo.title}”`}
+              disabled={pending}
+              onClick={() => setConfirming(true)}
             >
-              <path
-                d="M4 6h12M8 6V4h4v2m-6.5 0 .8 10h7.4l.8-10"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Button>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                className="size-4 fill-none stroke-current stroke-[1.75]"
+              >
+                <path
+                  d="M4 6h12M8 6V4h4v2m-6.5 0 .8 10h7.4l.8-10"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Button>
+          </span>
         </>
       )}
     </li>
@@ -188,15 +265,20 @@ function Section({
   children: (todo: Todo) => ReactNode;
 }) {
   const headingId = useId();
+  // Focusable from script only: focus lands here when its last row leaves.
   return (
-    <section aria-labelledby={headingId}>
+    <section
+      aria-labelledby={headingId}
+      tabIndex={-1}
+      className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+    >
       <SectionHeading id={headingId} count={todos.length}>
         {title}
       </SectionHeading>
       {todos.length === 0 ? (
         <p className="mt-3 text-pretty text-muted">{empty}</p>
       ) : (
-        <ul className="mt-2 border-t border-line">{todos.map(children)}</ul>
+        <ul className="mt-3 border-t border-line">{todos.map(children)}</ul>
       )}
     </section>
   );
@@ -207,9 +289,35 @@ export function TodoList({ todos }: { todos: Todo[] }) {
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string>();
   const today = useToday();
-  // False for the rows of the first render, so only todos done while you watch swipe.
-  const [live, setLive] = useState(false);
-  useEffect(() => setLive(true), []);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // The section each row sits in: open or done as it was when the row arrived, until a
+  // change of its done state has settled (see settleMs).
+  const [placed, setPlaced] = useState<ReadonlyMap<string, boolean>>(
+    () => new Map(todos.map((todo) => [todo.id, todo.done])),
+  );
+  const isPlacedDone = (todo: Todo) => placed.get(todo.id) ?? todo.done;
+  useEffect(() => {
+    const arrived = shown.filter((todo) => !placed.has(todo.id));
+    if (arrived.length > 0) {
+      setPlaced(
+        (prev) =>
+          new Map([...prev, ...arrived.map((t) => [t.id, t.done] as const)]),
+      );
+    }
+    const moving = shown.filter(
+      (todo) => placed.has(todo.id) && placed.get(todo.id) !== todo.done,
+    );
+    if (moving.length === 0) return;
+    const timer = setTimeout(() => {
+      for (const todo of moving) handOffFocus(rowElement(listRef, todo.id));
+      setPlaced(
+        (prev) =>
+          new Map([...prev, ...moving.map((t) => [t.id, t.done] as const)]),
+      );
+    }, settleMs);
+    return () => clearTimeout(timer);
+  }, [shown, placed]);
 
   function change(next: Change, action: () => Promise<TodoActionResult>) {
     setError(undefined);
@@ -223,7 +331,10 @@ export function TodoList({ todos }: { todos: Todo[] }) {
   async function add(formData: FormData) {
     const title = String(formData.get("title") ?? "").trim();
     const dueDate = String(formData.get("dueDate") ?? "") || null;
-    if (!title) return;
+    if (!title) {
+      setError("A todo needs a title.");
+      return;
+    }
     setError(undefined);
     show({
       type: "add",
@@ -245,49 +356,65 @@ export function TodoList({ todos }: { todos: Todo[] }) {
       key={todo.id}
       todo={todo}
       today={today}
-      live={live}
       onDone={(done) =>
         change({ type: "done", id: todo.id, done }, () =>
           setTodoDoneAction(todo.id, done),
         )
       }
-      onDelete={() =>
-        change({ type: "delete", id: todo.id }, () => deleteTodoAction(todo.id))
-      }
+      onDelete={() => {
+        handOffFocus(rowElement(listRef, todo.id));
+        change({ type: "delete", id: todo.id }, () =>
+          deleteTodoAction(todo.id),
+        );
+      }}
     />
   );
 
+  const ordered = [...shown].sort(compareInSection);
+  const open = ordered.filter((todo) => !isPlacedDone(todo));
+  const done = ordered.filter(isPlacedDone);
+
   return (
-    <div className="flex flex-col gap-10">
-      <form action={add} className="flex flex-wrap items-end gap-3">
-        <div className="min-w-0 flex-[1_1_16rem]">
-          <Field
-            label="New todo"
-            name="title"
-            required
-            maxLength={200}
-            autoComplete="off"
-            placeholder="What needs doing?"
-          />
-        </div>
-        <Field label="Due (optional)" name="dueDate" type="date" />
-        <SubmitButton>Add</SubmitButton>
-      </form>
-      <FormError message={error} />
+    <div ref={listRef} className="flex flex-col gap-10">
+      <div className="flex flex-col gap-3">
+        <form action={add} className="flex flex-wrap items-end gap-3">
+          <div className="min-w-0 flex-[1_1_16rem]">
+            <Field
+              label="New todo"
+              name="title"
+              required
+              maxLength={200}
+              autoComplete="off"
+              placeholder="What needs doing?"
+            />
+          </div>
+          <div className="min-w-0 flex-[1_1_9rem] sm:flex-none">
+            <Field label="Due (optional)" name="dueDate" type="date" />
+          </div>
+          <SubmitButton>Add</SubmitButton>
+        </form>
+        <FormError message={error} />
+      </div>
       <Section
         title="Open"
-        todos={shown.filter((todo) => !todo.done)}
-        empty="Nothing open. Add a todo above, or tell Lissie what's on your mind."
+        todos={open}
+        empty={
+          shown.length === 0
+            ? "An empty list. Lissie finds that suspicious. Add a todo above, or tell her what's on your mind."
+            : "Nothing open. Lissie will pretend this happens all the time."
+        }
       >
         {row}
       </Section>
-      <Section
-        title="Done"
-        todos={shown.filter((todo) => todo.done)}
-        empty="Nothing done yet. Lissie has noticed."
-      >
-        {row}
-      </Section>
+      {shown.length > 0 && (
+        <Section
+          title="Done"
+          todos={done}
+          empty="Nothing done yet. Lissie has noticed."
+        >
+          {row}
+        </Section>
+      )}
     </div>
   );
 }

@@ -1,7 +1,12 @@
 import type { ComponentProps, ReactNode } from "react";
 
 const controlClass =
-  "rounded-md border border-line bg-surface px-3 text-ink outline-none transition-colors placeholder:text-muted focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-amber";
+  "rounded-md border border-edge bg-surface px-3 text-ink outline-none transition-colors placeholder:text-muted focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-amber";
+
+/** The id of a control's hint, which the control names as its description. */
+function hintId(name: string, hint: ReactNode) {
+  return hint ? `${name}-hint` : undefined;
+}
 
 // The label above a control, with an optional hint under it; the control's id is its name.
 function Labelled({
@@ -21,7 +26,11 @@ function Labelled({
         {label}
       </label>
       {children}
-      {hint && <p className="text-sm text-muted">{hint}</p>}
+      {hint && (
+        <p id={hintId(name, hint)} className="text-sm text-muted">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
@@ -43,6 +52,7 @@ export function Field({
       <input
         id={name}
         name={name}
+        aria-describedby={hintId(name, hint)}
         className={`h-11 ${controlClass} ${mono ? "font-mono text-sm placeholder:font-sans" : "text-base"}`}
         {...input}
       />
@@ -62,6 +72,7 @@ export function CodeField({
       <textarea
         id={name}
         name={name}
+        aria-describedby={hintId(name, hint)}
         spellCheck={false}
         className={`min-h-28 py-2 font-mono text-sm leading-relaxed ${controlClass}`}
         {...textarea}
@@ -82,6 +93,7 @@ export function SelectField({
       <select
         id={name}
         name={name}
+        aria-describedby={hintId(name, hint)}
         className={`h-11 text-base ${controlClass}`}
         {...select}
       />

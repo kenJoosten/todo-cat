@@ -7,17 +7,20 @@ todo-cat has one visual direction, "Blue hour on the windowsill": Lissie watches
 - **Color:** a dusk-blue ground, indigo ink, and her amber eyes as the only accent. Amber marks the one main action of a page (Add, Sign in, Approve, Send), checkboxes, focus rings on inputs, the claw marks, and the done part of a progress bar; it is never text on the light ground.
 - **Type:** Imbue (a condensed Didone) for the wordmark, page titles and section heads, upright and haughty like a cat sitting very straight; Atkinson Hyperlegible Next for everything read or typed; Atkinson Hyperlegible Mono only for codes a user compares or types (the device code, the API tester's ids and JSON).
 - **Layout:** left-aligned. Forms sit in one narrow column; `/` puts the list in the main column and the chat beside it (under it on phones). The list sits on the ground with rules between rows, and only the chat is a raised panel, so the two read as different things.
-- **The signature detail:** a done todo's title is crossed by three tapered amber claw marks, not a line-through (`components/ui/claw-marks.tsx`). They draw left to right once when a todo is checked off while the list is on screen, by the user or by Lissie, and not for done todos on page load or with reduced motion. It is the only decorative motion; keep it that way.
+- **The signature detail:** a done todo's title is crossed by three tapered amber claw marks, not a line-through (`components/ui/claw-marks.tsx`). They draw left to right once when a todo is checked off while the list is on screen, by the user or by Lissie, and not for done todos on page load or with reduced motion. The row stays where it is while they draw and moves to Done a beat later, so the moment happens where the user is looking. It is the only decorative motion; keep it that way.
 - **Copy:** Lissie's voice in titles and empty states (dry, faintly superior), plain words on controls and errors.
 - Avoid: all-caps labels, paw prints or other cat clip-art, a second accent color, and cards around list rows.
 
 ## Where things live
 
 - Tokens: `app/globals.css`, one `@theme` block (light) and a `prefers-color-scheme: dark` block that redefines the same variables; components use the utilities (`bg-ground`, `text-ink`, `bg-surface`, ...) and never raw colors, so both modes follow from those two blocks.
+- `line` is for the rules between rows; `edge` outlines form controls, at 3:1 or more against both ground and surface so empty fields stay findable.
 - `on-amber` is the text color on amber in both modes; `night` and `on-night` are for a panel that stays dark in both modes (the API tester's response).
 - Fonts: `app/layout.tsx` loads them with `next/font/google` as CSS variables, which `@theme inline` maps to `font-display`, `font-sans` and `font-mono`. Imbue's optical size follows the font size by itself (`font-optical-sizing: auto`), so don't set `opsz`.
 - Shared components: `components/ui/`, including the page shell (wordmark and header actions), titles, section headings, buttons (`primary`, `secondary`, `danger`, `quiet`), the inline confirm step before something that can't be undone (deleting a todo, clearing the chat), fields, the checkbox, the claw marks and the progress bar. Pages compose them instead of repeating class strings.
-- The list on `/`: `app/todo-list.tsx`, with its Server Actions in `app/todo-actions.ts` (see [architecture.md](architecture.md)).
+- The list on `/`: `app/todo-list.tsx`, with its Server Actions in `app/todo-actions.ts` (see [architecture.md](architecture.md)); it sorts its optimistic rows with `lib/todo-order.ts`, the service's order, so nothing jumps when the server answers.
+- After a row leaves (checked off, reopened or deleted), focus goes to the same control in the next row, or to the section when it was the last; never to the page.
+- Every control has a 44px hit area: the `small` button size looks 32px but reaches further, and a row's checkbox shares its label with the title.
 - The chat's theme: `app/lissie-chat.css`.
 - Dark mode follows the system setting; there is no toggle.
 
@@ -34,4 +37,4 @@ todo-cat has one visual direction, "Blue hour on the windowsill": Lissie watches
 ## Checking a change
 
 - Look at it in light and dark mode at desktop and phone width (Playwright's `colorScheme` and viewport), with a conversation in the chat, before calling it done.
-- Contrast: body text is ink or muted on ground or surface; amber carries only fills and marks, with on-amber text.
+- Contrast: body text is ink or muted on ground or surface; amber carries only fills and marks, with on-amber text; control outlines use `edge`, never `line`.

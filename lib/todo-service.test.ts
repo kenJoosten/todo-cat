@@ -19,6 +19,7 @@ vi.stubEnv("DATABASE_URL", `file:${join(dir, "test.db")}`);
 const { db } = await import("./db");
 const { todos, user } = await import("./schema");
 const service = await import("./todo-service");
+const { compareTodos } = await import("./todo-order");
 const {
   addTodo,
   deleteTodo,
@@ -135,6 +136,20 @@ describe("listTodos", () => {
       "No date, older",
       "Done, due soonest",
     ]);
+  });
+
+  test("sorts the way compareTodos does, which the list on / sorts its own rows by", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const days = ["01", "02", "03", "04"];
+    for (const [i, day] of days.entries()) {
+      vi.setSystemTime(new Date(`2026-10-${day}T09:00:00Z`));
+      await add(alice, `Undated ${day}`);
+      await add(alice, `Due ${day}`, `2026-11-${days.at(-1 - i)}`);
+      const done = await add(alice, `Done ${day}`, i % 2 ? null : "2026-10-20");
+      await updateTodo(alice, done.id, { done: true });
+    }
+    const listed = await listTodos(alice, { status: "all" });
+    expect([...listed].reverse().sort(compareTodos)).toEqual(listed);
   });
 });
 

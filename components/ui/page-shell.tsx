@@ -20,7 +20,7 @@ export function PageShell({
       <header className="flex min-h-11 items-center justify-between gap-4">
         <Link
           href="/"
-          className="rounded-sm font-display text-2xl leading-none font-medium tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+          className="flex min-h-11 items-center rounded-sm font-display text-2xl leading-none font-medium tracking-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           todo-cat
         </Link>
