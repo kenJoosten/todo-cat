@@ -13,6 +13,9 @@
   --color-ink: #1e1b3a;
   --color-muted: #595677;
   --color-line: #c3c6e0;
+  /* The outline of a form control: line is for rules between rows, edge for anything you
+     type into, which must stand out 3:1 from both ground and surface. */
+  --color-edge: #7a7da6;
   /* Her eyes: the one main action, checkboxes, focus rings, the claw marks. Never text on
      the light ground; text on amber is always on-amber. */
   --color-amber: #f2b705;
@@ -32,6 +35,7 @@
     --color-ink: #e6e7f6;
     --color-muted: #a4a2c8;
     --color-line: #36346a;
+    --color-edge: #6b69a6;
     --color-amber: #f5be1a;
     --color-amber-deep: #ffd24d;
     --color-danger: #ff8a8f;

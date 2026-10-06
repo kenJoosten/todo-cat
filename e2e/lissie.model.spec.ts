@@ -13,7 +13,9 @@ test("chat with Lissie, then find the conversation again after a reload", async 
   await page.getByLabel("Email").fill(`noor-${Date.now()}@example.com`);
   await page.getByLabel("Password").fill("tuna-o-clock");
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Hi, Noor." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Back to it, Noor." }),
+  ).toBeVisible();
 
   const input = page.getByPlaceholder("Tell Lissie about your list");
   const message = "I keep putting off my tax return. Where do I start?";

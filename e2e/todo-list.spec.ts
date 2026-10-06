@@ -12,7 +12,7 @@ async function signUp(page: Page, name: string) {
   await page.getByLabel("Password").fill("tuna-o-clock");
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(
-    page.getByRole("heading", { name: `Hi, ${name}.` }),
+    page.getByRole("heading", { name: `Back to it, ${name}.` }),
   ).toBeVisible();
 }
 
@@ -29,8 +29,10 @@ test("add a todo with a due date, and it stays after a reload", async ({
   page,
 }) => {
   await signUp(page, "Quinn");
-  const { list, open } = sections(page);
-  await expect(open.getByText("Nothing open.")).toBeVisible();
+  const { list, open, done } = sections(page);
+  // A new list is one empty section, in Lissie's words.
+  await expect(open.getByText("An empty list.")).toBeVisible();
+  await expect(done).toHaveCount(0);
 
   await list.getByLabel("New todo").fill("Buy tuna");
   await list.getByLabel("Due (optional)").fill("2031-10-09");
@@ -101,7 +103,39 @@ test("delete a todo after confirming, or keep it", async ({ page }) => {
     .getByRole("button", { name: "Delete “Vacuum the cat hair”" })
     .click();
   await row.getByRole("button", { name: "Delete", exact: true }).click();
-  await expect(open.getByText("Nothing open.")).toBeVisible();
+  await expect(open.getByText("An empty list.")).toBeVisible();
   await page.reload();
-  await expect(open.getByText("Nothing open.")).toBeVisible();
+  await expect(open.getByText("An empty list.")).toBeVisible();
+});
+
+test("a checked-off todo stays put while it's scratched, and focus stays on the list", async ({
+  page,
+}) => {
+  await signUp(page, "Tove");
+  const { list, open, done } = sections(page);
+  for (const title of ["Brush the cat", "Feed the cat", "Buy tuna"]) {
+    await list.getByLabel("New todo").fill(title);
+    await list.getByLabel("New todo").press("Enter");
+    await expect(open.getByRole("checkbox", { name: title })).toBeEnabled();
+  }
+
+  // Checked off, it stays in Open with its claw marks, then moves to Done.
+  await open.getByRole("checkbox", { name: "Feed the cat" }).press("Space");
+  await expect(
+    open.getByRole("checkbox", { name: "Feed the cat" }),
+  ).toBeChecked();
+  await expect(
+    done.getByRole("checkbox", { name: "Feed the cat" }),
+  ).toBeChecked();
+  // Undated todos list newest first, so "Brush the cat" took its place, and has focus.
+  await expect(
+    open.getByRole("checkbox", { name: "Brush the cat" }),
+  ).toBeFocused();
+
+  // Deleting hands focus to the same button on the next row.
+  await open.getByRole("button", { name: "Delete “Buy tuna”" }).click();
+  await open.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(
+    open.getByRole("button", { name: "Delete “Brush the cat”" }),
+  ).toBeFocused();
 });

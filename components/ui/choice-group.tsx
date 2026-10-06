@@ -26,7 +26,7 @@ export function ChoiceGroup<T extends string>({
       {choices.map((choice) => (
         <label
           key={choice.value}
-          className="flex cursor-pointer items-baseline gap-3 rounded-md border border-line bg-surface px-3 py-2.5 transition-colors hover:border-ink has-checked:border-ink has-checked:ring-1 has-checked:ring-ink has-focus-visible:ring-2 has-focus-visible:ring-amber"
+          className="flex cursor-pointer items-baseline gap-3 rounded-md border border-edge bg-surface px-3 py-2.5 transition-colors hover:border-ink has-checked:border-ink has-checked:ring-1 has-checked:ring-ink has-focus-visible:ring-2 has-focus-visible:ring-amber"
         >
           <input
             type="radio"

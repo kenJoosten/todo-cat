@@ -12,9 +12,11 @@ const variants = {
 
 const sizes = {
   regular: "h-11 px-5",
-  small: "h-8 px-3 text-sm",
-  // A square button for an icon with an aria-label.
-  icon: "grid size-9 place-items-center",
+  // Looks 32px tall, but its hit area reaches 44px, the smallest comfortable touch target.
+  small:
+    "relative h-8 px-3 text-sm after:absolute after:inset-x-0 after:-inset-y-1.5",
+  // A square button for an icon with an aria-label, at the 44px touch target.
+  icon: "grid size-11 place-items-center",
 };
 
 export type ButtonStyle = {

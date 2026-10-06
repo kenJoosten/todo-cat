@@ -48,7 +48,7 @@ async function asUser<T>(
   if (!parsed.success) {
     return failure(
       "validation-failed",
-      "A todo needs a title of up to 200 characters, and a due date if any as a date.",
+      "A todo needs a title of up to 200 characters, and a due date that is a real date, if it has one.",
     );
   }
   try {

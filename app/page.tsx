@@ -38,12 +38,12 @@ export default async function Home() {
       }
     >
       <div className="grid items-start gap-x-14 gap-y-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <div className="flex flex-col gap-12">
+        <div className="flex max-w-2xl flex-col gap-12 lg:max-w-none">
           <PageTitle
             size="compact"
             lead="Here's your list. Lissie is watching it, and she can change it too."
           >
-            Hi, {me.name}.
+            Back to it, {me.name}.
           </PageTitle>
           <section aria-label="Your list">
             <TodoList todos={todos} />

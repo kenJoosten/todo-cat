@@ -17,7 +17,7 @@ async function signUp(page: Page, name: string) {
   await page.getByLabel("Password").fill("tuna-o-clock");
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(
-    page.getByRole("heading", { name: `Hi, ${name}.` }),
+    page.getByRole("heading", { name: `Back to it, ${name}.` }),
   ).toBeVisible();
   return email;
 }
@@ -127,7 +127,7 @@ test("the list shows todos that changed outside the page, such as through the AP
 }) => {
   await signUp(page, "Ines");
   const list = page.getByRole("region", { name: "Your list" });
-  await expect(list.getByText("Nothing open.")).toBeVisible();
+  await expect(list.getByText("An empty list.")).toBeVisible();
 
   // The REST API, with the page's session cookie, stands in for another client.
   const add = (title: string, dueDate: string | null = null) =>

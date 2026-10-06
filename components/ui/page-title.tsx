@@ -25,7 +25,7 @@ export function PageTitle({
         {children}
       </h1>
       {lead && (
-        <p className="mt-4 max-w-[60ch] text-lg leading-relaxed text-pretty text-muted">
+        <p className="mt-5 max-w-[60ch] text-lg leading-relaxed text-pretty text-muted">
           {lead}
         </p>
       )}
