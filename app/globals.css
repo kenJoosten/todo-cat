@@ -9,6 +9,8 @@
   --color-amber: #f2b705;
   --color-amber-deep: #d9a204;
   --color-danger: #b4232c;
+  /* Danger on an ink ground, where the regular red is too dark to read. */
+  --color-danger-light: #ff8a8f;
 }
 
 @theme inline {

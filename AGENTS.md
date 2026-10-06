@@ -71,7 +71,7 @@ Index:
 - [workspaces.md](tech-docs/workspaces.md): the workspace layout, why the contract is its own package, and npm workspace gotchas.
 - [database.md](tech-docs/database.md): Drizzle on SQLite, migrations, and how tests get their own databases.
 - [testing.md](tech-docs/testing.md): test strategy, the QA script, CI, and gotchas for Vitest and Playwright.
-- [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, and getting a bearer token with curl.
+- [rest-api.md](tech-docs/rest-api.md): the `/api/todos` endpoints, their schemas and status codes, getting a bearer token with curl, and the `/api-tester` page.
 - [auth.md](tech-docs/auth.md): Better Auth setup, the `getUserId` rule, schema generation, and the CLI-facing plugins.
 - [agent.md](tech-docs/agent.md): Lissie's Mastra agent, memory, the CopilotKit runtime and its route guard, and the chat on `/`.
 - [cli.md](tech-docs/cli.md): the `todo-cat` CLI, its output and exit code rules, device login and token storage, the `/device` page, and its end-to-end test.

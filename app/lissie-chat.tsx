@@ -2,6 +2,7 @@
 
 import { CopilotChat, CopilotKit } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
+import { inspectorEnabled } from "@/lib/lissie/inspector";
 import "./lissie-chat.css";
 
 const labels = {
@@ -20,7 +21,7 @@ export function LissieChat({ threadId }: { threadId: string }) {
       <CopilotKit
         runtimeUrl="/api/copilotkit"
         useSingleEndpoint={false}
-        enableInspector={false}
+        enableInspector={inspectorEnabled}
       >
         <CopilotChat agentId="lissie" threadId={threadId} labels={labels} />
       </CopilotKit>

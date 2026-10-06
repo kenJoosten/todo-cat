@@ -24,7 +24,7 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 - Memory scoping and the runtime are authorization, like the todo service: the user id always comes from `getUserId` on the request, never from the browser.
 - `guard.onRequest` answers 401 to any request without a session cookie or bearer token, on every path, before the runtime routes it.
 - `guard.onBeforeHandler` is an allowlist: `info`; `agent/run` and `agent/connect` for agent `lissie` with the caller's own thread id in the body; `agent/stop` and `threads/{messages,events,state}` for the caller's own thread in the path.
-- Every other route (thread list, clear, update, archive, subscribe, suggest, transcribe, memories, inspector, debug events) is 404, and so is another user's thread, so a caller can't tell whether it exists.
+- The `inspector/metadata` and `inspector/learning` routes are allowed only when `NEXT_PUBLIC_COPILOTKIT_INSPECTOR` is on (both are Intelligence-only, so they carry no user data here); every other route (thread list, clear, update, archive, subscribe, suggest, transcribe, memories, debug events) is 404, and so is another user's thread, so a caller can't tell whether it exists.
 - Without CopilotKit Intelligence the runtime scopes nothing to a user: its in-memory runner serves any thread id it is given, `GET /threads` lists every thread in the process, and `POST /threads/clear` wipes them all; the guard is the only thing in the way.
 - The agents factory builds Lissie per request with `resourceId` set to the user id, and sets Mastra's `MASTRA_RESOURCE_ID_KEY` and `MASTRA_THREAD_ID_KEY` in the request context, which Mastra prefers over anything in the run input.
 - When you add a route or upgrade CopilotKit, check `fetch-router` in `@copilotkit/runtime` for new routes and add them to the guard and to `everyRoute` in the test.
@@ -41,7 +41,7 @@ Lissie is one Mastra agent, served to the CopilotKit chat on `/` over AG-UI by a
 - The runtime forwards `authorization` and `x-*` request headers to the agent, and the bridge passes them to the model call, which would send a user's bearer token to OpenRouter; `forwardHeaders` in the route denies them all.
 - An explicit `threadId` on `CopilotChat` turns off its welcome screen; that is the price of history replay.
 - `<CopilotKit agentId>` does not reach `CopilotChat`, which then asks for an agent named `default`; name the agent on `CopilotChat`.
-- The CopilotKit Inspector, a dev overlay on localhost, is off (`enableInspector={false}`); the guard rejects its inspector and debug routes anyway.
+- The CopilotKit Inspector (a dev overlay) and the guard's `inspector/*` routes are both gated by `NEXT_PUBLIC_COPILOTKIT_INSPECTOR` via `lib/lissie/inspector.ts`, off unless it is `"true"`; the debug-events route stays 404 regardless.
 - `COPILOTKIT_TELEMETRY_DISABLED=true` in `.env` stops the runtime sending usage telemetry; `.env.example` sets it, so CI never calls out.
 - `recall()` throws for a thread that does not exist yet, so `lissieHistory` checks `getThreadById` first.
 
